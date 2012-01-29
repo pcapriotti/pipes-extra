@@ -20,10 +20,10 @@ main = defaultMain
     , bench "bigsum-buffer" (whnfIO $ C.runResourceT $ do
         bsrc <- C.bufferSource $ CL.sourceList [1..1000 :: Int]
         bsrc C.$$ CL.fold (+) 0)
-    , bench "fileread-pipes" (whnfIO $ C.runResourceT . runPipe $ fileProducer "bench" >+> discard)
-    , bench "fileread" (whnfIO $ C.runResourceT $ CB.sourceFile "bench" C.$$ CL.sinkNull)
+    , bench "fileread-pipes" (whnfIO $ C.runResourceT . runPipe $ fileProducer "general" >+> discard)
+    , bench "fileread" (whnfIO $ C.runResourceT $ CB.sourceFile "general" C.$$ CL.sinkNull)
     , bench "fileread-buffer" (whnfIO $ C.runResourceT $ do
-        bsrc <- C.bufferSource $ CB.sourceFile "bench"
+        bsrc <- C.bufferSource $ CB.sourceFile "general"
         bsrc C.$$ CL.sinkNull)
     , bench "map-pipes" (whnfIO $ C.runResourceT . runPipe $ (fromList [1..1000 :: Int] >> return 0) >+> pipe (+1) >+> foldP (+) 0)
     , bench "map" (whnfIO $ C.runResourceT $ CL.sourceList [1..1000 :: Int] C.$= CL.map (+ 1) C.$$ CL.fold (+) 0)
