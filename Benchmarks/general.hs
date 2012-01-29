@@ -3,8 +3,9 @@ import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import qualified Data.Conduit.Binary as CB
 
-import Control.Pipe.Guarded
 import Control.Pipe.Binary
+import Control.Pipe.Conduit
+import Control.Pipe.Guarded
 
 foldP :: Monad m => (a -> b -> a) -> a -> Consumer b m a
 foldP f z = go z
@@ -21,6 +22,7 @@ main = defaultMain
         bsrc <- C.bufferSource $ CL.sourceList [1..1000 :: Int]
         bsrc C.$$ CL.fold (+) 0)
     , bench "fileread-pipes" (whnfIO $ C.runResourceT . runPipe $ fileProducer "general" >+> discard)
+    , bench "fileread-adapters" (whnfIO $ C.runResourceT . runPipe $ sourcePipe (CB.sourceFile "general") >+> discard)
     , bench "fileread" (whnfIO $ C.runResourceT $ CB.sourceFile "general" C.$$ CL.sinkNull)
     , bench "fileread-buffer" (whnfIO $ C.runResourceT $ do
         bsrc <- C.bufferSource $ CB.sourceFile "general"
