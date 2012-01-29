@@ -22,4 +22,5 @@ Library
     Exposed-Modules:
         Control.Pipe.Guarded,
         Control.Pipe.Binary,
-        Control.Pipe.Zlib
+        Control.Pipe.Zlib,
+        Control.Pipe.Conduit
