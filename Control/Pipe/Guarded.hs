@@ -46,7 +46,7 @@ yield :: b -> Pipe a b m ()
 yield = Pipe . P.yield . Just
 
 await :: Monad m => Pipe a b m a
-await = tryAwait >>= maybe discard return
+await = Pipe $ P.await >>= maybe (P.yield Nothing >> P.discard) return
 
 tryAwait :: Monad m => Pipe a b m (Maybe a)
 tryAwait = Pipe $ do
