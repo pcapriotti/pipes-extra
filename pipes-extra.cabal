@@ -15,7 +15,7 @@ Library
     Build-Depends:
         base (== 4.*),
         mtl,
-        pipes (== 1.0.*),
+        pipes (== 1.1.*),
         conduit (== 0.1.*),
         bytestring (== 0.9.*),
         zlib-bindings
