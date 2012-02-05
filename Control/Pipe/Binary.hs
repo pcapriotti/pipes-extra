@@ -8,6 +8,7 @@ module Control.Pipe.Binary (
   isolate,
   takeWhile,
   dropWhile,
+  lines,
   bytes,
   ) where
 
@@ -18,9 +19,11 @@ import Control.Monad.Trans
 import Control.Monad.Trans.Resource
 import Control.Pipe.Guarded
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BC
+import Data.Monoid
 import Data.Word
 import System.IO
-import Prelude hiding (takeWhile, dropWhile)
+import Prelude hiding (takeWhile, dropWhile, lines)
 
 fileProducer :: ResourceIO m => FilePath -> Producer B.ByteString (ResourceT m) ()
 fileProducer path = handleIOProducer $ openFile path ReadMode
@@ -97,6 +100,19 @@ dropWhile p = do
   leftover <- takeWhile (not . p) >+> discard
   yield leftover
   idP
+
+lines :: Monad m => Pipe B.ByteString B.ByteString m r
+lines = go B.empty
+  where
+    go leftover = do
+      mchunk <- tryAwait
+      case mchunk of
+        Nothing -> yield leftover >> idP
+        Just chunk -> do
+          let chunk' = leftover `mappend` chunk
+          let ls = BC.lines chunk'
+          mapM_ yield $ init ls
+          go $ last ls
 
 bytes :: Monad m => Pipe B.ByteString Word8 m r
 bytes = forever $ await >>= B.foldl (\p c -> p >> yield c) (return ())
