@@ -18,9 +18,11 @@ Library
         pipes (== 1.1.*),
         conduit (== 0.1.*),
         bytestring (== 0.9.*),
-        zlib-bindings
+        zlib-bindings,
+        network
     Exposed-Modules:
         Control.Pipe.Guarded,
         Control.Pipe.Binary,
         Control.Pipe.Zlib,
-        Control.Pipe.Conduit
+        Control.Pipe.Conduit,
+        Control.Pipe.Network
