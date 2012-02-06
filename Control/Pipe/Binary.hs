@@ -108,11 +108,13 @@ lines = go B.empty
       mchunk <- tryAwait
       case mchunk of
         Nothing -> yield leftover >> idP
-        Just chunk -> do
-          let chunk' = leftover `mappend` chunk
-          let ls = BC.lines chunk'
-          mapM_ yield $ init ls
-          go $ last ls
+        Just chunk -> split chunk leftover
+    split chunk leftover
+      | B.null chunk = go leftover
+      | B.null rest  = go (mappend leftover chunk)
+      | otherwise    = yield (mappend leftover line) >>
+                       split (B.drop 1 rest) mempty
+      where (line, rest) = B.breakByte 10 chunk
 
 bytes :: Monad m => Pipe B.ByteString Word8 m r
 bytes = forever $ await >>= B.foldl (\p c -> p >> yield c) (return ())
