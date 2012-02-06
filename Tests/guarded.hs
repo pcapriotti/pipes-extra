@@ -2,7 +2,7 @@ import Control.Monad
 import Control.Monad.Identity
 import Control.Monad.Trans
 import Control.Monad.Writer
-import Control.Pipe.Guarded
+import Control.Pipe
 import Data.Char
 import Test.Framework
 import Test.Framework.Providers.QuickCheck2

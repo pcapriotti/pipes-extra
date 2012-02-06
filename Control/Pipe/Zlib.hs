@@ -11,7 +11,7 @@ import Codec.Zlib
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Trans.Resource
-import Control.Pipe.Guarded
+import Control.Pipe
 import Data.ByteString as B
 
 -- | Gzip compression with default parameters.

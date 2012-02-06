@@ -9,7 +9,7 @@ module Control.Pipe.Conduit (
 
 import Control.Monad.Trans
 import Control.Monad.Trans.Resource
-import Control.Pipe.Guarded
+import Control.Pipe
 import Data.Conduit
 
 -- | Convert a 'Conduit' to 'Pipe'.

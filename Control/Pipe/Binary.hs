@@ -17,7 +17,7 @@ module Control.Pipe.Binary (
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Trans.Resource
-import Control.Pipe.Guarded
+import Control.Pipe
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import Data.Monoid

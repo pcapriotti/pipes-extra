@@ -18,7 +18,7 @@ import Control.Exception (bracketOnError, IOException, bracket, throwIO, SomeExc
 import Control.Monad (forever)
 import Control.Monad.State
 import Control.Monad.Trans.Resource (ResourceT, runResourceT, register)
-import Control.Pipe.Guarded
+import Control.Pipe
 import Control.Concurrent (forkIO)
 
 -- adapted from conduit

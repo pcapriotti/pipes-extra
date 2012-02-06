@@ -1,7 +1,7 @@
 import Control.Concurrent (forkIO, killThread)
 import Control.Monad.State
 import Control.Monad.Trans.Resource
-import Control.Pipe.Guarded
+import Control.Pipe
 import Control.Pipe.Binary
 import Network (connectTo, PortID (..))
 import System.Environment (getArgs, getProgName)

@@ -5,7 +5,7 @@ import qualified Data.Conduit.Binary as CB
 
 import Control.Pipe.Binary
 import Control.Pipe.Conduit
-import Control.Pipe.Guarded
+import Control.Pipe
 
 foldP :: Monad m => (a -> b -> a) -> a -> Consumer b m a
 foldP f z = go z

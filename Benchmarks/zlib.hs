@@ -10,7 +10,7 @@ import qualified Data.Enumerator.Binary as EB
 import qualified Codec.Zlib.Enum as EZ
 import qualified System.IO as SIO
 
-import Control.Pipe.Guarded
+import Control.Pipe
 import qualified Control.Pipe.Binary as PB
 import qualified Control.Pipe.Zlib as PZ
 

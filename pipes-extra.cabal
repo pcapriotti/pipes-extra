@@ -21,7 +21,6 @@ Library
         zlib-bindings,
         network
     Exposed-Modules:
-        Control.Pipe.Guarded,
         Control.Pipe.Binary,
         Control.Pipe.Zlib,
         Control.Pipe.Conduit,
