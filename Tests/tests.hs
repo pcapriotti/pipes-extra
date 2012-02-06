@@ -62,18 +62,15 @@ prop_pipeList xs f =
   run (P.fromList xs >+> P.pipeList f $$ P.consume) ==
   Just (concatMap f xs)
 
-prop_untilFalse :: [Int] -> Bool
-prop_untilFalse xs =
-  run (P.fromList xs >+> P.until (const False) $$ P.consume) ==
-  Just (xs)
+prop_takeWhile :: (Int -> Bool) -> [Int] -> Bool
+prop_takeWhile p xs =
+  run (P.fromList xs >+> P.takeWhile_ p $$ P.consume) ==
+  Just (takeWhile p xs)
 
-prop_untilNeg :: [Positive Int] -> [Positive Int] -> Bool
-prop_untilNeg xs1 xs2 =
-  run (P.fromList xs >+> P.until (< 0) $$ P.consume) ==
-  Just (map fromIntegral xs1)
-  where
-    xs = map fromIntegral xs1 ++
-         map (negate . fromIntegral) xs2
+prop_dropWhile:: (Int -> Bool) -> [Int] -> Bool
+prop_dropWhile p xs =
+  run (P.fromList xs >+> P.dropWhile p $$ P.consume) ==
+  Just (dropWhile p xs)
 
 prop_groupBy :: [Int] -> Bool
 prop_groupBy xs =
@@ -95,9 +92,9 @@ main = defaultMain $ [
     , testProperty "head . take == head" prop_take
     , testProperty "drop . fromList" prop_take
     , testProperty "pipeList == concatMap" prop_pipeList
-    , testProperty "until false" prop_untilFalse
-    , testProperty "until negative" prop_untilNeg
-    , testProperty "groupBy" prop_untilNeg
+    , testProperty "takeWhile" prop_takeWhile
+    , testProperty "dropWhile" prop_dropWhile
+    , testProperty "groupBy" prop_groupBy
     , testProperty "filter" prop_filter
     ]
   ]

@@ -8,7 +8,10 @@ module Control.Pipe.Combinators (
   take,
   drop,
   pipeList,
-  until,
+  takeWhile,
+  takeWhile_,
+  dropWhile,
+  intersperse,
   groupBy,
   filter,
   ) where
@@ -16,7 +19,7 @@ module Control.Pipe.Combinators (
 import Control.Monad
 import Control.Pipe
 import Data.Maybe
-import Prelude hiding (until, take, drop, concatMap, filter)
+import Prelude hiding (until, take, drop, concatMap, filter, takeWhile, dropWhile)
 
 -- | Connect producer to consumer, ignoring producer return value.
 infixr 5 $$
@@ -54,11 +57,28 @@ drop n = replicateM n await >> idP
 pipeList :: Monad m => (a -> [b]) -> Pipe a b m r
 pipeList f = forever $ await >>= mapM_ yield . f
 
--- | Terminate as soon as an input satisfying the predicate is received.
-until :: Monad m => (a -> Bool) -> Pipe a a m ()
-until p = go
+-- | Act as an identity until as long as inputs satisfy the given predicate.
+-- Return the first element that doesn't satisfy the predicate.
+takeWhile :: Monad m => (a -> Bool) -> Pipe a a m a
+takeWhile p = go
   where
-    go = await >>= \x -> if p x then return () else yield x >> go
+    go = await >>= \x -> if p x then yield x >> go else return x
+
+-- | Variation of 'takeWhile' returning @()@.
+takeWhile_ :: Monad m => (a -> Bool) -> Pipe a a m ()
+takeWhile_ p = takeWhile p >> return ()
+
+-- | Remove inputs as long as they satisfy the given predicate, then act as an
+-- identity.
+dropWhile :: Monad m => (a -> Bool) -> Pipe a a m r
+dropWhile p = (takeWhile p >+> discard) >>= yield >> idP
+
+-- | Yield Nothing when an input satisfying the predicate is received.
+intersperse :: Monad m => (a -> Bool) -> Pipe a (Maybe a) m r
+intersperse p = forever $ do
+  x <- await
+  when (p x) $ yield Nothing
+  yield $ Just x
 
 -- | Group input values by the given predicate.
 groupBy :: Monad m => (a -> a -> Bool) -> Pipe a [a] m r
@@ -71,10 +91,13 @@ groupBy p = streaks >+> createGroups
       yield $ Just y
       streaks' y
     createGroups = forever $
-      until isNothing >+>
+      takeWhile_ isJust >+>
       pipe fromJust >+>
-      (consume >>= yield)
+      (consume >>= yieldNonNull)
+    yieldNonNull xs
+      | null xs   = return ()
+      | otherwise = yield xs
 
 -- | Remove values from the stream that don't satisfy the given predicate.
 filter :: Monad m => (a -> Bool) -> Pipe a a m r
-filter p = forever $ until (not . p)
+filter p = forever $ takeWhile_ p
