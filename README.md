@@ -5,6 +5,7 @@ Experiments with [pipes][1].
  * `Control.Pipe.Conduit`: Adapters to convert conduits, sink and sources to pipes.
  * `Control.Pipe.Zlib`: Pipes to deal with zipped data. Ported from conduit.
  * `Control.Pipe.Network`: Utilities to deal with sockets. Ported from conduit.
+ * `Control.Pipe.Combinators`: General-purpose pipes and combinators.
 
 Note that `Control.Pipe.Binary` uses `ResourceT` from the [Conduit][2] package to
 guarantee finalization of handles.
