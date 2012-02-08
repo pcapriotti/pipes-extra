@@ -10,7 +10,6 @@ module Control.Pipe.Zlib (
 import Codec.Zlib
 import Control.Monad
 import Control.Monad.Trans
-import Control.Monad.Trans.Resource
 import Control.Pipe
 import Data.ByteString as B
 

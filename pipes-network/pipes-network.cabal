@@ -1,4 +1,4 @@
-Name: pipes-extra
+Name: pipes-network
 Version: 0.0.1
 Cabal-Version: >= 1.8
 Build-Type: Simple
@@ -8,8 +8,8 @@ Copyright: (c) 2012 Paolo Capriotti <p.capriotti@gmail.com>
 Author: Paolo Capriotti
 Maintainer: p.capriotti@gmail.com
 Stability: Experimental
-Synopsis: Pipes utilities
-Category: Control, Enumerator
+Synopsis: Pipes utilities for sockets
+Category: Control, Enumerator, Network
 
 Library
     Build-Depends:
@@ -18,11 +18,6 @@ Library
         pipes (== 1.1.*),
         conduit (== 0.1.*),
         bytestring (== 0.9.*),
-        zlib-bindings,
         network
     Exposed-Modules:
-        Control.Pipe.Binary,
-        Control.Pipe.Combinators,
-        Control.Pipe.Conduit,
         Control.Pipe.Network
-        Control.Pipe.Zlib

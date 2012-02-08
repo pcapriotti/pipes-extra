@@ -1,0 +1,22 @@
+Name: pipes-zlib
+Version: 0.0.1
+Cabal-Version: >= 1.8
+Build-Type: Simple
+License: BSD3
+License-File: LICENSE
+Copyright: (c) 2012 Paolo Capriotti <p.capriotti@gmail.com>
+Author: Paolo Capriotti
+Maintainer: p.capriotti@gmail.com
+Stability: Experimental
+Synopsis: Pipes utilities
+Category: Control, Enumerator
+
+Library
+    Build-Depends:
+        base (== 4.*),
+        mtl,
+        pipes (== 1.1.*),
+        bytestring (== 0.9.*),
+        zlib-bindings
+    Exposed-Modules:
+        Control.Pipe.Zlib
