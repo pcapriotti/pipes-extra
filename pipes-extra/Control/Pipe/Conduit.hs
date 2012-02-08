@@ -1,8 +1,11 @@
 -- | Adapters to convert conduits to pipes.
 module Control.Pipe.Conduit (
+  -- ** Sources
   sourcePipe,
+  -- ** Conduits
   conduitPipe,
   conduitPipe_,
+  -- ** Sinks
   sinkPipe,
   sinkPipe_
   ) where

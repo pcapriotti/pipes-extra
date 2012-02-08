@@ -1,6 +1,6 @@
 module Control.Pipe.Zlib (
   gzip,
-  ungzip,
+  gunzip,
   decompress,
   compress
   ) where
@@ -18,8 +18,8 @@ gzip :: MonadIO m => Pipe B.ByteString B.ByteString m ()
 gzip = compress 1 (WindowBits 31)
 
 -- | Gzip decompression with default parameters.
-ungzip :: MonadIO m => Pipe B.ByteString B.ByteString m ()
-ungzip = decompress (WindowBits 31)
+gunzip :: MonadIO m => Pipe B.ByteString B.ByteString m ()
+gunzip = decompress (WindowBits 31)
 
 decompress
     :: MonadIO m
