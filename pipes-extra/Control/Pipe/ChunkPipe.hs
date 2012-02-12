@@ -4,7 +4,8 @@
 -- The main interface is an alternative monad instance for Pipe, which passes
 -- leftover data along automatically.
 module Control.Pipe.ChunkPipe (
-  ChunkPipe,
+  ChunkPipe(..),
+  unChunkPipe,
   nonchunked,
   ) where
 
