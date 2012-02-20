@@ -1,0 +1,17 @@
+Name: pipes-conduit
+Version: 0.0.1
+License: BSD3
+License-file: LICENSE
+Author: Paolo Capriotti
+Maintainer: p.capriotti@gmail.com
+Category: Control, Enumerator
+Build-type: Simple
+Cabal-version: >=1.2
+
+Library
+  Exposed-modules: Control.Pipe.Conduit
+  Build-depends:
+    base (== 4.*),
+    mtl,
+    pipes (== 1.1.*),
+    conduit (== 0.2.*)
