@@ -14,6 +14,7 @@ Category: Control, Enumerator
 Library
     Build-Depends:
         base (== 4.*),
+        free,
         mtl,
         void,
         pipes (== 1.1.*),
