@@ -18,6 +18,7 @@ module Control.Pipe.Combinators (
   ) where
 
 import Control.Monad
+import Control.Monad.Free
 import Control.Pipe
 import Data.Maybe
 import Prelude hiding (until, take, drop, concatMap, filter, takeWhile, dropWhile)
@@ -38,7 +39,7 @@ nullP = return ()
 -- | A fold pipe. Apply a binary function to successive input values and an
 -- accumulator, and return the final result.
 fold :: Monad m => (b -> a -> b) -> b -> Pipe a x m b
-fold f z = go z
+fold f = go
   where
     go x = tryAwait >>= maybe (return x) (go . f x)
 
@@ -52,7 +53,7 @@ take n = replicateM_ n $ await >>= yield
 
 -- | Remove the first 'n' values from the stream, then act as an identity.
 drop :: Monad m => Int -> Pipe a a m r
-drop n = replicateM n await >> idP
+drop n = replicateM_ n await >> idP
 
 -- | Apply a function with multiple return values to the stream.
 pipeList :: Monad m => (a -> [b]) -> Pipe a b m r
@@ -105,4 +106,14 @@ filter p = forever $ takeWhile_ p
 
 -- | Feed an input element to a pipe.
 feed :: Monad m => a -> Pipe a b m r -> Pipe a b m r
-feed x p = (yield x >> idP) >+> p
+-- this could be implemented as
+-- feed x p = (yield x >> idP) >+> p
+-- but this version is more efficient
+feed _ (Pure r) = return r
+feed a (Free c) = join $ go c
+  where
+    go (Await k) = return $ k a
+    go (Yield y c) = yield y >> return c
+    go (M m s) = lift_ s m
+    go (Catch s h) = catchP (go s) (liftM return . h)
+    go (Throw e) = throw e
