@@ -4,19 +4,13 @@ import qualified Data.Conduit.List as CL
 import qualified Data.Conduit.Binary as CB
 
 import Control.Pipe.Binary
+import Control.Pipe.Combinators
 import Control.Pipe.Conduit
 import Control.Pipe
 
-foldP :: Monad m => (a -> b -> a) -> a -> Pipe b Void m a
-foldP f z = go z
-  where go z = tryAwait >>= maybe (return z) (go . f z)
-
-fromList :: Monad m => [a] -> Pipe () a m ()
-fromList = mapM_ yield
-
 main :: IO ()
 main = defaultMain
-    [ bench "bigsum-pipes" (whnfIO $ runPipe $ (fromList [1..1000 :: Int] >> return 0) >+> foldP (+) 0)
+    [ bench "bigsum-pipes" (whnfIO $ runPipe $ (mapM_ yield [1..1000 :: Int] >> return 0) >+> fold (+) 0)
     , bench "bigsum-buffer" (whnfIO $ C.runResourceT $ do
         bsrc <- C.bufferSource $ CL.sourceList [1..1000 :: Int]
         bsrc C.$$ CL.fold (+) 0)
@@ -26,7 +20,7 @@ main = defaultMain
     , bench "fileread-buffer" (whnfIO $ C.runResourceT $ do
         bsrc <- C.bufferSource $ CB.sourceFile "general"
         bsrc C.$$ CL.sinkNull)
-    , bench "map-pipes" (whnfIO $ runPipe $ (fromList [1..1000 :: Int] >> return 0) >+> pipe (+1) >+> foldP (+) 0)
+    , bench "map-pipes" (whnfIO $ runPipe $ (mapM_ yield [1..1000 :: Int] >> return 0) >+> pipe (+1) >+> fold (+) 0)
     , bench "map" (whnfIO $ C.runResourceT $ CL.sourceList [1..1000 :: Int] C.$= CL.map (+ 1) C.$$ CL.fold (+) 0)
     , bench "map-buffer" (whnfIO $ C.runResourceT $ do
         bsrc <- C.bufferSource $ CL.sourceList [1..1000 :: Int]
