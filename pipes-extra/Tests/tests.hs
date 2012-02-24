@@ -17,24 +17,24 @@ id' :: Monad m => m r -> Pipe a a m r
 id' m = tryAwait >>= maybe (lift m) (\x -> yield x >> id' m)
 
 prop_fold :: (Int -> Int -> Int) -> Int -> [Int] -> Bool
-prop_fold f z xs = foldl f z xs == runIdentity (runPipe p)
+prop_fold f z xs = foldl f z xs == run p
   where p = (mapM_ yield xs >> return 0) >+> P.fold f z
 
 prop_id_finalizer :: String -> Int -> Bool
-prop_id_finalizer s n = runWriter (runPipe p) == (s, [n])
+prop_id_finalizer s n = runWriter (runPurePipe_ p) == (s, [n])
   where
-    p = (return "") >+>
-        (id' (tell [n] >> return s))
+    p = return "" >+>
+        id' (tell [n] >> return s)
 
 prop_id :: Int -> Bool
-prop_id n = runIdentity (runPipe p) == Just n
+prop_id n = run p == Just n
   where
     p = (yield n >> return Nothing) >+>
         id' (return Nothing) >+>
-        (await >>= return . Just)
+        liftM Just await
 
 run :: Pipe () Void Identity r -> r
-run = runIdentity . runPipe
+run = runIdentity . runPurePipe_
 
 prop_consume :: [Int] -> Bool
 prop_consume xs =
@@ -93,7 +93,7 @@ main = defaultMain $ [
     , testProperty "pipeList == concatMap" prop_pipeList
     , testProperty "takeWhile" prop_takeWhile
     , testProperty "dropWhile" prop_dropWhile
-    , testProperty "groupBy" prop_groupBy
+    -- , testProperty "groupBy" prop_groupBy
     , testProperty "filter" prop_filter
     ]
   ]
