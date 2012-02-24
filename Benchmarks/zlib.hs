@@ -41,10 +41,10 @@ enumerator = SIO.withBinaryFile "tmp" SIO.WriteMode $ \h -> E.run_
     E.=$ EB.iterHandle h
 
 pipes :: IO ()
-pipes = C.runResourceT . runPipe
-  $ PB.fileProducer filePath
-  >+> PZ.ungzip
-  >+> PB.fileConsumer "tmp"
+pipes = runPipe
+  $ PB.fileReader filePath
+  >+> PZ.gunzip
+  >+> PB.fileWriter "tmp"
 
 main :: IO ()
 main = defaultMain

@@ -1,11 +1,10 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Control.Pipe.Binary (
   -- ** Handle and File IO
   fileReader,
   handleReader,
-  handleIOReader,
   fileWriter,
   handleWriter,
-  handleIOWriter,
 
   -- ** Chunked Byte Stream Manipulation
   take,
@@ -16,87 +15,68 @@ module Control.Pipe.Binary (
   ) where
 
 import Control.Monad
-import Control.Monad.Trans
-import Control.Monad.Trans.Resource
+import Control.Monad.Trans (MonadIO, liftIO)
 import Control.Pipe
+import qualified Control.Pipe.Combinators as PC
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import Data.Monoid
+import Data.Void
 import Data.Word
 import System.IO
-import Prelude hiding (take, takeWhile, dropWhile, lines)
+import Prelude hiding (take, takeWhile, dropWhile, lines, catch)
 
 -- | Read data from a file.
-fileReader :: ResourceIO m => FilePath -> Pipe x B.ByteString (ResourceT m) ()
-fileReader path = handleIOReader $ openFile path ReadMode
+fileReader :: MonadIO m => FilePath -> Pipe () B.ByteString m ()
+fileReader path = bracket
+  (liftIO $ openFile path ReadMode)
+  (liftIO . hClose)
+  handleReader
 
 -- | Read data from an open handle.
-handleReader :: MonadIO m => Handle -> Pipe x B.ByteString m ()
+handleReader :: MonadIO m => Handle -> Pipe () B.ByteString m ()
 handleReader h = go
   where
     go = do
       eof <- lift . liftIO $ hIsEOF h
-      if eof
-        then return ()
-        else do
-          chunk <- lift . liftIO $ B.hGetSome h 4096
-          yield chunk
-          go
-
--- | Read data from an handle, given an IO action to open it.
-handleIOReader :: ResourceIO m => IO Handle -> Pipe x B.ByteString (ResourceT m) ()
-handleIOReader openHandle = do
-  (releaseKey, h) <- lift $ withIO openHandle hClose
-  handleReader h
-  lift $ release releaseKey
+      unless eof $ do
+        chunk <- lift . liftIO $ B.hGetSome h 4096
+        -- lift . liftIO . putStrLn $ "chunk size " ++ show (B.length chunk)
+        yield chunk
+        go
 
 -- | Write data to a file.
 --
 -- The file is only opened if some data arrives into the pipe.
-fileWriter :: ResourceIO m => FilePath -> Pipe B.ByteString x (ResourceT m) ()
-fileWriter path = handleIOWriter (openFile path WriteMode)
-
--- | Write data to a handle.
-handleWriter:: MonadIO m => Handle -> Pipe B.ByteString x m ()
-handleWriter h = go
-  where
-    go = do
-      input <- tryAwait
-      case input of
-        Nothing -> return ()
-        Just chunk -> do
-          lift . liftIO $ B.hPut h chunk
-          go
-
--- | Write data to a handle, given an IO action to open it.
---
--- The handle is only opened if some data arrives into the pipe.
-handleIOWriter :: ResourceIO m => IO Handle -> Pipe B.ByteString x (ResourceT m) ()
-handleIOWriter openHandle = do
+fileWriter :: MonadIO m => FilePath -> Pipe B.ByteString Void m ()
+fileWriter path = do
   -- receive some data before opening the handle
   input <- await
-  -- feed it back to the stricter version of this consumer
-  (yield input >> idP) >+> handleIOWriter' openHandle
+  -- feed it to the actual worker pipe
+  PC.feed input go
+  where
+    go = bracket
+      (liftIO $ openFile path WriteMode)
+      (liftIO . hClose)
+      handleWriter
 
--- strict version of handleIOWriter: open handle immediately and write data to it.
-handleIOWriter' :: ResourceIO m => IO Handle -> Pipe B.ByteString x (ResourceT m) ()
-handleIOWriter' openHandle = do
-  (releaseKey, h) <- lift $ withIO openHandle hClose
-  handleWriter h
-  lift $ release releaseKey
+-- | Write data to a handle.
+handleWriter:: MonadIO m => Handle -> Pipe B.ByteString Void m ()
+handleWriter h = forever $ do
+  chunk <- await
+  -- lift . liftIO . putStrLn $ "writing chunk " ++ show (B.length chunk)
+  lift . liftIO . B.hPut h $ chunk
 
 -- | Act as an identity for the first 'n' bytes, then terminate returning the
 -- unconsumed portion of the last chunk.
 take :: Monad m => Int -> Pipe B.ByteString B.ByteString m B.ByteString
-take n = go n
-  where
-    go size = do
-      chunk <- await
-      let (chunk', leftover) = B.splitAt size chunk
-      yield chunk'
-      if B.null leftover
-        then go $ size - B.length chunk'
-        else return leftover
+take size = do
+  chunk <- await
+  let (chunk', leftover) = B.splitAt size chunk
+  yield chunk'
+  if B.null leftover
+    then take $ size - B.length chunk'
+    else return leftover
 
 -- | Act as an identity as long as the given predicate holds, then terminate
 -- returning the unconsumed portion of the last chunk.
@@ -106,7 +86,7 @@ takeWhile p = go
     go = do
       chunk <- await
       let (chunk', leftover) = B.span p chunk
-      when (not $ B.null chunk) $ yield chunk'
+      unless (B.null chunk) $ yield chunk'
       if B.null leftover
         then go
         else return leftover

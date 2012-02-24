@@ -5,5 +5,5 @@ import Control.Pipe.Zlib
 import System.IO
 
 main :: IO ()
-main = runResourceT . runPipe $
-  handleProducer stdin >+> gzip >+> handleConsumer stdout
+main = runPipe $
+  handleReader stdin >+> gzip >+> handleWriter stdout

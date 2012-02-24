@@ -14,6 +14,7 @@ module Control.Pipe.Combinators (
   intersperse,
   groupBy,
   filter,
+  feed,
   ) where
 
 import Control.Monad
@@ -23,8 +24,8 @@ import Prelude hiding (until, take, drop, concatMap, filter, takeWhile, dropWhil
 
 -- | Connect producer to consumer, ignoring producer return value.
 infixr 5 $$
-($$) :: Monad m => Producer a m r' -> Consumer a m r -> m (Maybe r)
-p1 $$ p2 = runPipe $ (p1 >> return Nothing) >+> fmap Just p2
+($$) :: Monad m => Pipe x a m r' -> Pipe a y m r -> Pipe x y m (Maybe r)
+p1 $$ p2 = (p1 >> return Nothing) >+> fmap Just p2
 
 -- | Successively yield elements of a list.
 fromList :: Monad m => [a] -> Pipe x a m ()
@@ -101,3 +102,7 @@ groupBy p = streaks >+> createGroups
 -- | Remove values from the stream that don't satisfy the given predicate.
 filter :: Monad m => (a -> Bool) -> Pipe a a m r
 filter p = forever $ takeWhile_ p
+
+-- | Feed an input element to a pipe.
+feed :: Monad m => a -> Pipe a b m r -> Pipe a b m r
+feed x p = (yield x >> idP) >+> p

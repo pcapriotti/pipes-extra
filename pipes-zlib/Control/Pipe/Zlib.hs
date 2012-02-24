@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Control.Pipe.Zlib (
   gzip,
   gunzip,
@@ -8,10 +10,12 @@ module Control.Pipe.Zlib (
 -- adapted from conduit
 
 import Codec.Zlib
+import Control.Exception (SomeException)
 import Control.Monad
-import Control.Monad.Trans
+import Control.Monad.Trans (MonadIO, liftIO)
 import Control.Pipe
-import Data.ByteString as B
+import qualified Data.ByteString as B
+import Prelude hiding (catch)
 
 -- | Gzip compression with default parameters.
 gzip :: MonadIO m => Pipe B.ByteString B.ByteString m ()
@@ -32,7 +36,7 @@ decompress config = do
       mapM_ yield chunks
 
     chunk <- lift . liftIO $ finishInflate inf
-    unless (B.null chunk) $ do
+    unless (B.null chunk) $
       yield chunk
 
 compress
@@ -48,17 +52,14 @@ compress level config = do
     chunks <- lift . liftIO $ finishDeflate def callback
     mapM_ yield chunks
 
-callback :: Monad m => m (Maybe a) -> m [a]
+callback :: (Show a, MonadIO m) => m (Maybe a) -> m [a]
 callback pop = go id where
-    go xs = do
-       x <- pop
-       case x of
-           Nothing -> return $ xs []
-           Just y -> go (xs . (y:))
+  go xs = do
+    x <- pop
+    case x of
+      Nothing -> return $ xs []
+      Just y -> go (xs . (y:))
 
-whileAwait :: Monad m => (a -> Pipe a b m r) -> Pipe a b m ()
-whileAwait f = do
-  x <- tryAwait
-  case x of
-    Nothing -> return ()
-    Just x' -> f x' >> whileAwait f
+whileAwait :: (Show a, MonadIO m) => (a -> Pipe a b m r) -> Pipe a b m ()
+whileAwait f = catch_ (forever $ await >>= f)
+  (\(_ :: BrokenUpstreamPipe) -> return ())

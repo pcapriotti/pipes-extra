@@ -1,7 +1,6 @@
 import Control.Monad
 import Control.Monad.Identity
-import Control.Monad.Trans
-import Control.Monad.Writer
+import Control.Monad.Writer (tell, runWriter)
 import Control.Pipe
 import Control.Pipe.Combinators (($$))
 import qualified Control.Pipe.Combinators as P
@@ -34,7 +33,7 @@ prop_id n = runIdentity (runPipe p) == Just n
         id' (return Nothing) >+>
         (await >>= return . Just)
 
-run :: Pipeline Identity r -> r
+run :: Pipe () Void Identity r -> r
 run = runIdentity . runPipe
 
 prop_consume :: [Int] -> Bool

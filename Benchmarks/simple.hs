@@ -1,7 +1,6 @@
 import Criterion.Main
 
 import Control.Monad
-import Control.Monad.Trans
 import Control.Pipe
 import System.IO
 

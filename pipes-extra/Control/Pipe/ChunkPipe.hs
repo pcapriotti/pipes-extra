@@ -5,7 +5,6 @@
 -- leftover data along automatically.
 module Control.Pipe.ChunkPipe (
   ChunkPipe(..),
-  unChunkPipe,
   nonchunked,
   ) where
 

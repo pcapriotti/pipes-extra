@@ -1,4 +1,5 @@
 import Control.Concurrent (forkIO, killThread)
+import qualified Control.Exception as E
 import Control.Monad.State
 import Control.Monad.Trans.Resource
 import Control.Pipe
@@ -19,14 +20,14 @@ main = do
         name <- getProgName
         putStrLn $ "Usage : " ++ name ++ " host port"
 
-hConnect :: Handle -> Handle -> ResourceT IO ()
-hConnect h1 h2 = runPipe $ handleProducer h1 >+> handleConsumer h2
+hConnect :: Handle -> Handle -> IO ()
+hConnect h1 h2 = runPipe $ handleReader h1 >+> handleWriter h2
 
 telnet :: String -> Int -> IO ()
-telnet host port = runResourceT $ do
-    (releaseSock, hsock) <- with (connectTo host $ PortNumber $ fromIntegral port) hClose
-    liftIO $ mapM_ (`hSetBuffering` LineBuffering) [ stdin, stdout, hsock ]
-    (releaseThread, _) <- with (
-                          forkIO . runResourceT $ hConnect stdin hsock
-                          ) killThread
-    hConnect hsock stdout
+telnet host port = E.bracket
+    (connectTo host (PortNumber (fromIntegral port)))
+    hClose
+    (\hsock -> do
+      mapM_ (`hSetBuffering` LineBuffering) [ stdin, stdout, hsock ]
+      forkIO $ hConnect stdin hsock
+      hConnect hsock stdout)
