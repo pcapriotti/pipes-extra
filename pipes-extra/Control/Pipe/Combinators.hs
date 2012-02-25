@@ -4,7 +4,9 @@ module Control.Pipe.Combinators (
   fromList,
   nullP,
   fold,
+  fold1,
   consume,
+  consume1,
   take,
   drop,
   pipeList,
@@ -17,6 +19,7 @@ module Control.Pipe.Combinators (
   feed,
   ) where
 
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Free
 import Control.Pipe
@@ -43,9 +46,18 @@ fold f = go
   where
     go x = tryAwait >>= maybe (return x) (go . f x)
 
+-- | A variation of 'fold' without an initial value for the accumulator. This
+-- pipe doesn't return any value if no input values are received.
+fold1 :: Monad m => (a -> a -> a) -> Pipe a x m a
+fold1 f = tryAwait >>= maybe discard (fold f)
+
 -- | Accumulate all input values into a list.
 consume :: Monad m => Pipe a x m [a]
-consume = fold (\xs x -> xs . (x:)) id >>= \xs -> return (xs [])
+consume = pipe (:) >+> (fold (.) id <*> pure [])
+
+-- | Accumulate all input values into a non-empty list.
+consume1 :: Monad m => Pipe a x m [a]
+consume1 = pipe (:) >+> (fold1 (.) <*> pure [])
 
 -- | Act as an identity for the first 'n' values, then terminate.
 take :: Monad m => Int -> Pipe a a m ()
@@ -95,10 +107,7 @@ groupBy p = streaks >+> createGroups
     createGroups = forever $
       takeWhile_ isJust >+>
       pipe fromJust >+>
-      (consume >>= yieldNonNull)
-    yieldNonNull xs
-      | null xs   = return ()
-      | otherwise = yield xs
+      (consume1 >>= yield)
 
 -- | Remove values from the stream that don't satisfy the given predicate.
 filter :: Monad m => (a -> Bool) -> Pipe a a m r

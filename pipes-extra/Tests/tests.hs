@@ -93,7 +93,7 @@ main = defaultMain $ [
     , testProperty "pipeList == concatMap" prop_pipeList
     , testProperty "takeWhile" prop_takeWhile
     , testProperty "dropWhile" prop_dropWhile
-    -- , testProperty "groupBy" prop_groupBy
+    , testProperty "groupBy" prop_groupBy
     , testProperty "filter" prop_filter
     ]
   ]
