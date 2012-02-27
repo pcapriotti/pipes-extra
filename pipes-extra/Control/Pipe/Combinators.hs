@@ -115,14 +115,22 @@ filter p = forever $ takeWhile_ p
 
 -- | Feed an input element to a pipe.
 feed :: Monad m => a -> Pipe a b m r -> Pipe a b m r
+
+data FeedState x = Queued x | Fed x
+instance Functor FeedState where
+  fmap f (Queued x) = Queued (f x)
+  fmap f (Fed x) = Fed (f x)
+
 -- this could be implemented as
 -- feed x p = (yield x >> idP) >+> p
 -- but this version is more efficient
 feed _ (Pure r) = return r
-feed a (Free c) = join $ go c
+feed a (Free c) = case go c of
+  Queued p -> p >>= feed a
+  Fed p     -> join p
   where
-    go (Await k) = return $ k a
-    go (Yield y c) = yield y >> return c
-    go (M m s) = lift_ s m
-    go (Catch s h) = catchP (go s) (liftM return . h)
-    go (Throw e) = throw e
+    go (Await k) = Fed $ return (k a)
+    go (Yield y c) = Queued $ yield y >> return c
+    go (M m s) = Queued $ lift_ s m
+    go (Catch s h) = fmap (\p' -> catchP p' (liftM return . h)) (go s)
+    go (Throw e) = Queued $ throw e
