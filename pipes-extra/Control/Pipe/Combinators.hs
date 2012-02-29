@@ -21,7 +21,6 @@ module Control.Pipe.Combinators (
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Free
 import Control.Pipe
 import Data.Maybe
 import Prelude hiding (until, take, drop, concatMap, filter, takeWhile, dropWhile)
@@ -120,13 +119,11 @@ feed :: Monad m => a -> Pipe a b m r -> Pipe a b m r
 -- feed x p = (yield x >> idP) >+> p
 -- but this version is more efficient
 feed _ (Pure r) = return r
-feed a (Free c) = go c >>= \(done, p) ->
-  if done then p else feed a p
+feed _ (Throw e) = throw e
+feed a (Free c h) = case go a c of
+  (False, p) -> p >>= feed a
+  (True, p)  -> join p
   where
-    go (Await k) = return (True, k a)
-    go (Yield y c) = yield y >> return (False, c)
-    go (M m s) = lift_ s m >>= continue
-    go (Catch s h) = catchP (go s) (h >=> return . continue)
-    go (Throw e) = throw e
-
-    continue p = return (False, p)
+    go a (Await k) = (True, return $ k a)
+    go _ (Yield y c) = (False, yield y >> return c)
+    go _ (M m s) = (False, lift_ s m)

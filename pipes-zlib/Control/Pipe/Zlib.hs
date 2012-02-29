@@ -61,5 +61,5 @@ callback pop = go id where
       Just y -> go (xs . (y:))
 
 whileAwait :: (Show a, MonadIO m) => (a -> Pipe a b m r) -> Pipe a b m ()
-whileAwait f = catch_ (forever $ await >>= f)
+whileAwait f = catch (forever $ await >>= f)
   (\(_ :: BrokenUpstreamPipe) -> return ())
