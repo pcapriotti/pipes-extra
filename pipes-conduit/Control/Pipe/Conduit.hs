@@ -11,8 +11,11 @@ module Control.Pipe.Conduit (
   ) where
 
 import Control.Monad (void)
+import Control.Monad.Trans
 import Control.Monad.Trans.Resource
 import Control.Pipe
+import Control.Pipe.Combinators
+import Control.Pipe.Exception
 import Data.Conduit
 
 -- | Convert a 'Conduit' to 'Pipe'.

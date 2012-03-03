@@ -15,9 +15,10 @@ module Control.Pipe.Binary (
   ) where
 
 import Control.Monad
-import Control.Monad.Trans (MonadIO, liftIO)
+import Control.Monad.Trans (MonadIO, liftIO, lift)
 import Control.Pipe
-import qualified Control.Pipe.Combinators as PC
+import Control.Pipe.Exception
+import Control.Pipe.Combinators (tryAwait, feed)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import Data.Monoid
@@ -53,7 +54,7 @@ fileWriter path = do
   -- receive some data before opening the handle
   input <- await
   -- feed it to the actual worker pipe
-  PC.feed input go
+  feed input go
   where
     go = bracket
       (liftIO $ openFile path WriteMode)

@@ -21,5 +21,4 @@ Library
         bytestring (== 0.9.*)
     Exposed-Modules:
         Control.Pipe.Binary,
-        Control.Pipe.ChunkPipe,
-        Control.Pipe.Combinators
+        Control.Pipe.ChunkPipe

@@ -12,8 +12,10 @@ module Control.Pipe.Zlib (
 import Codec.Zlib
 import Control.Exception (SomeException)
 import Control.Monad
-import Control.Monad.Trans (MonadIO, liftIO)
+import Control.Monad.Trans (MonadIO, liftIO, lift)
 import Control.Pipe
+import Control.Pipe.Combinators
+import Control.Pipe.Exception
 import qualified Data.ByteString as B
 import Prelude hiding (catch)
 
@@ -31,7 +33,7 @@ decompress
     -> Pipe B.ByteString B.ByteString m ()
 decompress config = do
     inf <- lift . liftIO $ initInflate config
-    whileAwait $ \x -> do
+    forP $ \x -> do
       chunks <- lift . liftIO $ withInflateInput inf x callback
       mapM_ yield chunks
 
@@ -46,7 +48,7 @@ compress
     -> Pipe B.ByteString B.ByteString m ()
 compress level config = do
     def <- lift . liftIO $ initDeflate level config
-    whileAwait $ \x -> do
+    forP $ \x -> do
       chunks <- lift . liftIO $ withDeflateInput def x callback
       mapM_ yield chunks
     chunks <- lift . liftIO $ finishDeflate def callback
@@ -59,7 +61,3 @@ callback pop = go id where
     case x of
       Nothing -> return $ xs []
       Just y -> go (xs . (y:))
-
-whileAwait :: (Show a, MonadIO m) => (a -> Pipe a b m r) -> Pipe a b m ()
-whileAwait f = catch (forever $ await >>= f)
-  (\(_ :: BrokenUpstreamPipe) -> return ())
