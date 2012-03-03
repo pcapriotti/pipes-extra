@@ -1,8 +1,9 @@
 import Control.Monad
 import Control.Monad.Identity
 import Control.Monad.Writer (tell, runWriter)
+import Control.Monad.Trans
 import Control.Pipe
-import Control.Pipe.Combinators (($$))
+import Control.Pipe.Combinators (($$), tryAwait)
 import qualified Control.Pipe.Combinators as P
 import Data.Char
 import Data.List
