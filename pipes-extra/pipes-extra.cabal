@@ -17,10 +17,11 @@ Library
         free,
         mtl,
         void,
-        pipes (== 1.1.*),
+        pipes-core (== 0.0.*),
         bytestring (== 0.9.*)
     Exposed-Modules:
         Control.Pipe.Binary,
         Control.Pipe.Coroutine,
         Control.Pipe.ChunkPipe,
+        Control.Pipe.Tee,
         Control.Pipe.Zip
