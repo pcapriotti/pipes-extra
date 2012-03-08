@@ -23,4 +23,5 @@ Library
         Control.Pipe.Binary,
         Control.Pipe.Coroutine,
         Control.Pipe.ChunkPipe,
+        Control.Pipe.Tee,
         Control.Pipe.Zip
