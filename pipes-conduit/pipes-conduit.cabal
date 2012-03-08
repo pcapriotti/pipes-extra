@@ -13,5 +13,5 @@ Library
   Build-depends:
     base (== 4.*),
     mtl,
-    pipes (== 1.1.*),
+    pipes-core (== 0.0.*),
     conduit (== 0.2.*)

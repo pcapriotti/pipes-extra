@@ -15,7 +15,7 @@ Library
     Build-Depends:
         base (== 4.*),
         mtl,
-        pipes (== 1.1.*),
+        pipes-core (== 0.0.*),
         bytestring (== 0.9.*),
         zlib-bindings
     Exposed-Modules:

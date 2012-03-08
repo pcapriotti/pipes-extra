@@ -6,5 +6,5 @@ Collection of basic utilities for [pipes][1].
  * **pipes-network**: Utilities to deal with sockets. Ported from conduit.
  * **pipes-zlib**: Pipes to deal with zipped data. Ported from conduit.
 
- [1]: https://github.com/Gabriel439/Haskell-Pipes-Library
+ [1]: https://github.com/pcapriotti/Haskell-Pipes-Library
  [2]: http://hackage.haskell.org/package/conduit
