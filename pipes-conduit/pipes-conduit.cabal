@@ -4,9 +4,17 @@ License: BSD3
 License-file: LICENSE
 Author: Paolo Capriotti
 Maintainer: p.capriotti@gmail.com
+Stability: Experimental
+Homepage: https://github.com/pcapriotti/pipes-extra
 Category: Control, Enumerator
 Build-type: Simple
+Synopsis: Conduit adapters
+Description: Conduit adapters
 Cabal-version: >=1.8
+
+Source-Repository head
+    Type: git
+    Location: https://github.com/pcapriotti/pipes-extra
 
 Library
   Exposed-modules: Control.Pipe.Conduit

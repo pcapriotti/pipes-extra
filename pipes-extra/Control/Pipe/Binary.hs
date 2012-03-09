@@ -22,7 +22,6 @@ import Control.Pipe.Combinators (tryAwait, feed)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import Data.Monoid
-import Data.Void
 import Data.Word
 import System.IO
 import Prelude hiding (take, takeWhile, dropWhile, lines, catch)

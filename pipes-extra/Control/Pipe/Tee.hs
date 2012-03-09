@@ -21,7 +21,6 @@ import Control.Monad.Trans   (MonadIO(..))
 import Control.Pipe
 import Control.Pipe.Binary   (fileWriter)
 import Data.ByteString       (ByteString)
-import Data.Void             (Void)
 
 -- | Acts like 'idP', but also passes a copy to the supplied consumer.
 tee :: (Monad m)

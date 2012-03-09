@@ -1,15 +1,20 @@
 Name: pipes-zlib
 Version: 0.0.1
-Cabal-Version: >= 1.8
-Build-Type: Simple
 License: BSD3
-License-File: LICENSE
-Copyright: (c) 2012 Paolo Capriotti <p.capriotti@gmail.com>
+License-file: LICENSE
 Author: Paolo Capriotti
 Maintainer: p.capriotti@gmail.com
 Stability: Experimental
-Synopsis: Pipes utilities
-Category: Control, Enumerator
+Homepage: https://github.com/pcapriotti/pipes-extra
+Category: Control, Enumerator, Compression
+Build-type: Simple
+Synopsis: Pipes to deal with zipped data.
+Description: Pipes to deal with zipped data.
+Cabal-version: >=1.8
+
+Source-Repository head
+    Type: git
+    Location: https://github.com/pcapriotti/pipes-extra
 
 Library
     Build-Depends:
