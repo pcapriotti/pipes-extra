@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 module Control.Pipe.Coroutine (
   Coroutine,
   coroutine,
@@ -10,7 +11,10 @@ module Control.Pipe.Coroutine (
 
 import Control.Monad
 import Control.Pipe
+import Control.Pipe.Exception
 import qualified Control.Exception as E
+import Data.Typeable
+import Prelude hiding (catch)
 
 data Coroutine a b m r = Coroutine
   { suspend :: Pipe a b m r
@@ -39,8 +43,21 @@ step :: Monad m
      -> Pipe a x m (Either r (b, Coroutine a b m r))
 step = resume . suspend
 
+data CoroutineTerminated = CoroutineTerminated
+  deriving (Show, Typeable)
+
+instance E.Exception CoroutineTerminated
+
 terminate :: Monad m
           => Coroutine a b m r
-          -> Pipe a x m ()
-terminate (Coroutine _ h) =
-  void (catchP discard h) >+> return ()
+          -> Pipe a b m ()
+terminate p = go (suspendE p (E.toException CoroutineTerminated))
+  where
+    go (Pure r) = return ()
+    go (Throw e) = return ()
+    go (Free c h) = catchP (step c) (return . h) >>= go
+
+    step (Await k) = liftM k await
+    step (Yield b p) = return p
+    step (M m (Finalizer _)) = ensure m
+    step (M m s) = liftP s m
