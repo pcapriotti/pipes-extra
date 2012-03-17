@@ -1,5 +1,5 @@
 Name: pipes-conduit
-Version: 0.0.1
+Version: 0.0.2
 License: BSD3
 License-file: LICENSE
 Author: Paolo Capriotti
@@ -21,5 +21,5 @@ Library
   Build-depends:
     base (== 4.*),
     mtl,
-    pipes-core (== 0.0.*),
+    pipes-core (== 0.1.*),
     conduit (== 0.2.*)

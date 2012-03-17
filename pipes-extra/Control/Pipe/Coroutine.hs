@@ -59,5 +59,5 @@ terminate p = go (suspendE p (E.toException CoroutineTerminated))
 
     step (Await k) = liftM k await
     step (Yield b p) = return p
-    step (M m (Finalizer _)) = ensure m
+    step (M m (Finalizer _)) = masked m
     step (M m s) = liftP s m
