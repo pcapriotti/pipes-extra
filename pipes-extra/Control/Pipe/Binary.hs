@@ -105,6 +105,7 @@ lines = go B.empty
     go leftover = do
       mchunk <- tryAwait
       case mchunk of
+        Nothing | B.null leftover -> idP
         Nothing -> yield leftover >> idP
         Just chunk -> split chunk leftover
     split chunk leftover
