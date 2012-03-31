@@ -25,6 +25,6 @@ Library
     Exposed-Modules:
         Control.Pipe.Binary,
         Control.Pipe.Coroutine,
-        Control.Pipe.ChunkPipe,
+        Control.Pipe.PutbackPipe,
         Control.Pipe.Tee,
         Control.Pipe.Zip
