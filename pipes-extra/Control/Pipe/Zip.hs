@@ -22,15 +22,15 @@ controllable :: Monad m
              => Producer a m r
              -> Pipe (Either () (ProducerControl r)) a m r
 controllable p = do
-  x <- pipe (const ()) >+> resume p
+  x <- pipe (const ()) >+> suspend p
   case x of
     Left r -> return r
     Right (b, p') ->
       join $ onException
         (await >>= \c -> case c of
-          Left () -> yield b >> return (controllable (suspend p'))
+          Left () -> yield b >> return (controllable (resume p'))
           Right (Done r) -> return $ (pipe (const ()) >+> terminate p') >> return r
-          Right (Error e) -> return $ controllable (suspendE p' e))
+          Right (Error e) -> return $ (pipe (const ()) >+> terminate p') >> throw e)
         (pipe (const ()) >+> terminate p')
 
 controllable_ :: Monad m

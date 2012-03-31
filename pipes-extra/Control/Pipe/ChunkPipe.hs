@@ -6,10 +6,13 @@
 module Control.Pipe.ChunkPipe (
   ChunkPipe(..),
   nonchunked,
+  nonchunkedMaybe,
   ) where
 
 import Control.Pipe
+import Control.Monad
 import Data.Monoid
+import Data.Maybe
 
 -- | Newtype wrapper for Pipe proving a monad instance that takes care of
 -- passing leftover data automatically.
@@ -27,3 +30,8 @@ instance (Monoid a, Monad m) => Monad (ChunkPipe a b m) where
 -- input.
 nonchunked :: (Monoid a, Monad m) => Pipe a b m r -> ChunkPipe a b m r
 nonchunked p = ChunkPipe $ p >>= \r -> return (mempty, r)
+
+nonchunkedMaybe :: Monad m => Pipe a b m r -> ChunkPipe (First a) b m r
+nonchunkedMaybe p = nonchunked $ ignoreNothing >+> p
+  where
+    ignoreNothing = forever $ await >>= maybe (return ()) yield . getFirst
