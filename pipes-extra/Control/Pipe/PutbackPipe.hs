@@ -29,6 +29,10 @@ instance MonadTrans (PutbackPipe a b) where
 instance (Monad m, Functor m) => Functor (PutbackPipe a b m) where
   fmap f (PutbackPipe p) = PutbackPipe (fmap f p)
 
+-- | FIXME: Move this to pipes-core
+instance (MonadIO m) => MonadIO (Pipe a b m)  where
+  liftIO = lift . liftIO
+
 instance (MonadIO m) => MonadIO (PutbackPipe a b m) where
   liftIO a = PutbackPipe (liftIO a)
 
