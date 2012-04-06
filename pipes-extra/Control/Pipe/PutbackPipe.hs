@@ -7,6 +7,7 @@ module Control.Pipe.PutbackPipe (
   runPutback
   ) where
 
+import Control.Applicative
 import Control.Monad.Trans
 import Control.Monad.State
 import qualified Control.Pipe as P
@@ -24,6 +25,12 @@ instance Monad m => Monad (PutbackPipe a b m) where
 
 instance MonadTrans (PutbackPipe a b) where
   lift = PutbackPipe . lift . lift
+
+instance (Monad m, Functor m) => Functor (PutbackPipe a b m) where
+  fmap f (PutbackPipe p) = PutbackPipe (fmap f p)
+
+instance (MonadIO m) => MonadIO (PutbackPipe a b m) where
+  liftIO a = PutbackPipe (liftIO a)
 
 nonputback :: (Monad m) => Pipe a b m r -> PutbackPipe a b m r
 nonputback p = PutbackPipe (lift p)
