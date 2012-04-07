@@ -40,6 +40,8 @@ coroutine :: Monad m
           -> Coroutine a b m r
 coroutine p = Coroutine p []
 
+-- FIXME: What about finilizer part of coroutine? Looks like it is ignored
+-- here..
 step :: Monad m
      => Coroutine a b m r
      -> Pipe a x m (Either r (b, Coroutine a b m r))
