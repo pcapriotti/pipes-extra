@@ -1,5 +1,5 @@
 module Control.Pipe.PutbackPipe (
-  nonputback,
+  fromPipe,
   putback,
   yield,
   await,
@@ -7,6 +7,7 @@ module Control.Pipe.PutbackPipe (
   runPutback
   ) where
 
+import Control.Monad
 import Control.Monad.Trans
 import qualified Control.Pipe as P
 import Control.Pipe ((>+>), Pipe)
@@ -14,7 +15,7 @@ import qualified Control.Pipe.Combinators as PC
 import Control.Pipe.Monoidal
 
 newtype PutbackPipe a b m r = PutbackPipe {
-  unPutback :: Pipe a (Either b a) m r
+  unPutback :: Pipe (Either a a) (Either b a) m r
   }
 
 instance Monad m => Monad (PutbackPipe a b m) where
@@ -24,8 +25,8 @@ instance Monad m => Monad (PutbackPipe a b m) where
 instance MonadTrans (PutbackPipe a b) where
   lift = PutbackPipe . lift
 
-nonputback :: Monad m => Pipe a b m r -> PutbackPipe a b m r
-nonputback p = PutbackPipe (p >+> P.pipe Left)
+fromPipe :: Monad m => Pipe a b m r -> PutbackPipe a b m r
+fromPipe p = PutbackPipe (joinP >+> p >+> P.pipe Left)
 
 putback :: Monad m => a -> PutbackPipe a b m ()
 putback = PutbackPipe . P.yield . Right
@@ -34,10 +35,10 @@ yield :: Monad m => b -> PutbackPipe a b m ()
 yield = PutbackPipe . P.yield . Left
 
 await :: Monad m => PutbackPipe a b m a
-await = PutbackPipe P.await
+await = PutbackPipe $ liftM (either id id) P.await
 
 tryAwait :: Monad m => PutbackPipe a b m (Maybe a)
-tryAwait = PutbackPipe PC.tryAwait
+tryAwait = PutbackPipe $ liftM (fmap (either id id)) PC.tryAwait
 
 runPutback :: Monad m => PutbackPipe a b m r -> Pipe a b m r
-runPutback pb = loopP (joinP >+> unPutback pb)
+runPutback = loopP . unPutback
