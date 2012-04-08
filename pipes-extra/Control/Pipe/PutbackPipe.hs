@@ -8,6 +8,7 @@
 -- To make use of a PutbackPipe within a 'Pipeline', you need to convert it to
 -- a regular 'Pipe' using 'runPutback'.
 module Control.Pipe.PutbackPipe (
+  PutbackPipe(..),
   fromPipe,
   putback,
   yield,
