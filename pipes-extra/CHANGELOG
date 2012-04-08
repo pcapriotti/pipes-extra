@@ -1,0 +1,9 @@
+## Version 0.1.0 (unreleased)
+
+- Improved naming in Control.Pipe.Coroutine.
+- Replaced ChunkPipe with PutbackPipe.
+
+## Version 0.0.1 (09 Mar 2012)
+
+- Initial release.
+
