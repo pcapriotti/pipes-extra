@@ -15,7 +15,8 @@ module Control.Pipe.Binary (
   ) where
 
 import Control.Monad
-import Control.Monad.Trans (MonadIO, liftIO, lift)
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Class
 import Control.Pipe
 import Control.Pipe.Exception
 import Control.Pipe.Combinators (tryAwait, feed)

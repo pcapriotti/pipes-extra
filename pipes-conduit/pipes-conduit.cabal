@@ -20,6 +20,6 @@ Library
   Exposed-modules: Control.Pipe.Conduit
   Build-depends:
     base (== 4.*),
-    mtl,
+    transformers (== 0.2.*),
     pipes-core (== 0.1.*),
     conduit (== 0.2.*)

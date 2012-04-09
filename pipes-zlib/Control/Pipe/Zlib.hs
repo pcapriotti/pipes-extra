@@ -12,7 +12,8 @@ module Control.Pipe.Zlib (
 import Codec.Zlib
 import Control.Exception (SomeException)
 import Control.Monad
-import Control.Monad.Trans (MonadIO, liftIO, lift)
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Class
 import Control.Pipe
 import Control.Pipe.Combinators
 import Control.Pipe.Exception

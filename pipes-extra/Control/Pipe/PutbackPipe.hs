@@ -19,7 +19,8 @@ module Control.Pipe.PutbackPipe (
 
 import Control.Applicative
 import Control.Monad
-import Control.Monad.Trans
+import Control.Monad.IO.Class
+import Control.Monad.Trans.Class
 import qualified Control.Pipe as P
 import Control.Pipe ((>+>), Pipe)
 import qualified Control.Pipe.Combinators as PC

@@ -11,7 +11,7 @@ module Control.Pipe.Conduit (
   ) where
 
 import Control.Monad (void)
-import Control.Monad.Trans
+import Control.Monad.Trans.Class
 import Control.Monad.Trans.Resource
 import Control.Pipe
 import Control.Pipe.Combinators

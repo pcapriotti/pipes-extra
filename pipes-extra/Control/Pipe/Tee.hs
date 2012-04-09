@@ -17,10 +17,10 @@ module Control.Pipe.Tee (
   teeFileBS
   ) where
 
-import Control.Monad.Trans   (MonadIO(..))
+import Control.Monad.IO.Class
 import Control.Pipe
-import Control.Pipe.Binary   (fileWriter)
-import Data.ByteString       (ByteString)
+import Control.Pipe.Binary
+import Data.ByteString
 
 -- | Acts like 'idP', but also passes a copy to the supplied consumer.
 tee :: (Monad m)
