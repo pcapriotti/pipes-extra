@@ -1,4 +1,5 @@
 module Control.Pipe.PutbackPipe (
+  PutbackPipe(..),
   fromPipe,
   putback,
   yield,
