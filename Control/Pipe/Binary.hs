@@ -42,7 +42,6 @@ handleReader h = go
       eof <- lift . liftIO $ hIsEOF h
       unless eof $ do
         chunk <- lift . liftIO $ B.hGetSome h 4096
-        -- lift . liftIO . putStrLn $ "chunk size " ++ show (B.length chunk)
         yield chunk
         go
 
@@ -65,7 +64,6 @@ fileWriter path = do
 handleWriter:: MonadIO m => Handle -> Pipe B.ByteString Void m ()
 handleWriter h = forever $ do
   chunk <- await
-  -- lift . liftIO . putStrLn $ "writing chunk " ++ show (B.length chunk)
   lift . liftIO . B.hPut h $ chunk
 
 -- | Act as an identity for the first 'n' bytes, then terminate returning the
