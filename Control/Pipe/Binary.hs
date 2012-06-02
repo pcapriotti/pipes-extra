@@ -48,7 +48,7 @@ handleReader h = go
 -- | Write data to a file.
 --
 -- The file is only opened if some data arrives into the pipe.
-fileWriter :: MonadIO m => FilePath -> Pipe B.ByteString Void m ()
+fileWriter :: MonadIO m => FilePath -> Pipe B.ByteString Void m r
 fileWriter path = do
   -- receive some data before opening the handle
   input <- await
@@ -61,7 +61,7 @@ fileWriter path = do
       handleWriter
 
 -- | Write data to a handle.
-handleWriter:: MonadIO m => Handle -> Pipe B.ByteString Void m ()
+handleWriter:: MonadIO m => Handle -> Pipe B.ByteString Void m r
 handleWriter h = forever $ do
   chunk <- await
   lift . liftIO . B.hPut h $ chunk
