@@ -102,3 +102,17 @@ Executable decompress
         buildable: False
     hs-source-dirs: examples
     main-is: decompress.hs
+
+test-suite tests
+  type: exitcode-stdio-1.0
+  hs-source-dirs: tests
+  main-is: Tests.hs
+  build-depends: base >= 4 && < 5
+               , HUnit == 1.2.*
+               , bytestring == 0.9.*
+               , test-framework == 0.6.*
+               , test-framework-hunit == 0.2.*
+               , test-framework-th-prime == 0.0.*
+               , mtl == 2.1.*
+               , pipes-core == 0.1.*
+               , pipes-extra == 0.2.*
