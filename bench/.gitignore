@@ -1,0 +1,6 @@
+*.hi
+*.o
+*.html
+tmp
+zlib
+general

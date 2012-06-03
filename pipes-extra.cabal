@@ -28,3 +28,39 @@ Library
         Control.Pipe.PutbackPipe,
         Control.Pipe.Tee,
         Control.Pipe.Zip
+
+benchmark bench-general
+    type: exitcode-stdio-1.0
+    hs-source-dirs: . bench
+    main-is: general.hs
+    build-depends: base == 4.*
+                 , pipes-core == 0.1.*
+                 , bytestring == 0.9.*
+                 , transformers >= 0.2 && < 0.4
+                 , conduit == 0.4.*
+                 , criterion == 0.6.*
+
+benchmark bench-simple
+    type: exitcode-stdio-1.0
+    hs-source-dirs: . bench
+    main-is: simple.hs
+    build-depends: base == 4.*
+                 , pipes-core == 0.1.*
+                 , transformers >= 0.2 && < 0.4
+                 , criterion == 0.6.*
+
+benchmark bench-zlib
+    type: exitcode-stdio-1.0
+    hs-source-dirs: . bench
+    main-is: zlib.hs
+    build-depends: base == 4.*
+                 , pipes-core == 0.1.*
+                 , pipes-zlib < 0.2
+                 , bytestring == 0.9.*
+                 , transformers >= 0.2 && < 0.4
+                 , enumerator == 0.4.*
+                 , zlib-enum == 0.2.*
+                 , conduit == 0.4.*
+                 , zlib-conduit == 0.4.*
+                 , zlib == 0.5.*
+                 , criterion == 0.6.*
