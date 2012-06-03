@@ -1,7 +1,5 @@
-import Control.Concurrent (forkIO, killThread)
+import Control.Concurrent (forkIO)
 import qualified Control.Exception as E
-import Control.Monad.State
-import Control.Monad.Trans.Resource
 import Control.Pipe
 import Control.Pipe.Binary
 import Network (connectTo, PortID (..))

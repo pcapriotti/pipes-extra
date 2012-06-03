@@ -6,7 +6,7 @@ import Control.Concurrent (forkIO, myThreadId, threadDelay)
 import qualified Control.Exception as E
 import Control.Exception (Exception, IOException, throwTo)
 import Control.Monad
-import Control.Monad.Trans
+import Control.Monad.Trans.Class
 import Control.Pipe
 import Control.Pipe.Combinators
 import Control.Pipe.Exception

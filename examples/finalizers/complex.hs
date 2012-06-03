@@ -1,7 +1,7 @@
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import Control.Monad
-import Control.Monad.Trans
+import Control.Monad.Trans.Class
 import Control.Pipe
 import qualified Control.Pipe.Binary as PB
 import Control.Pipe.Combinators
