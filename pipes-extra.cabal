@@ -1,5 +1,5 @@
 Name: pipes-extra
-Version: 0.1.0
+Version: 0.2.0
 License: BSD3
 License-file: LICENSE
 Author: Paolo Capriotti
@@ -73,7 +73,7 @@ Executable telnet
     if flag(examples)
         build-depends: base == 4.*
                      , pipes-core == 0.1.*
-                     , pipes-extra == 0.1.*
+                     , pipes-extra >= 0.1 && < 0.3
                      , transformers == 0.3.*
                      , network == 2.3.*
     else
@@ -85,7 +85,7 @@ Executable compress
     if flag(examples)
         build-depends: base == 4.*
                      , pipes-core == 0.1.*
-                     , pipes-extra == 0.1.*
+                     , pipes-extra >= 0.1 && < 0.3
                      , pipes-zlib < 0.2
     else
         buildable: False
@@ -96,7 +96,7 @@ Executable decompress
     if flag(examples)
         build-depends: base == 4.*
                      , pipes-core == 0.1.*
-                     , pipes-extra == 0.1.*
+                     , pipes-extra >= 0.1 && < 0.3
                      , pipes-zlib < 0.2
     else
         buildable: False
