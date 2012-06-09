@@ -27,5 +27,5 @@ telnet host port = E.bracket
     hClose
     (\hsock -> do
       mapM_ (`hSetBuffering` LineBuffering) [ stdin, stdout, hsock ]
-      forkIO $ hConnect stdin hsock
+      _ <- forkIO $ hConnect stdin hsock
       hConnect hsock stdout)
