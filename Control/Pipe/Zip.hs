@@ -19,8 +19,8 @@ data ProducerControl r
   | Error E.SomeException
 
 controllable :: Monad m
-             => Producer a m r
-             -> Pipe (Either () (ProducerControl r)) a m r
+             => Producer Void a m r
+             -> Pipe l (Either () (ProducerControl r)) a m r
 controllable p = do
   x <- pipe (const ()) >+> suspend p
   case x of
@@ -34,8 +34,8 @@ controllable p = do
         (pipe (const ()) >+> terminate p')
 
 controllable_ :: Monad m
-              => Producer a m r
-              -> Producer a m r
+              => Producer Void a m r
+              -> Producer l a m r
 controllable_ p = pipe Left >+> controllable p
 
 data ZipControl r
@@ -43,26 +43,26 @@ data ZipControl r
   | RightZ (ProducerControl r)
 
 zip :: Monad m
-    => Producer a m r
-    -> Producer b m r
-    -> Pipe (Either () (ZipControl r)) (Either a b) m r
+    => Producer Void a m r
+    -> Producer Void b m r
+    -> Pipe l (Either () (ZipControl r)) (Either a b) m r
 zip p1 p2 = translate >+> (controllable p1 *+* controllable p2)
   where
-    translate = forever $ await >>= \c -> case c of
+    translate = forever $ await >>= \z -> case z of
       Left () -> (yield . Left . Left $ ()) >> (yield . Right . Left $ ())
       Right (LeftZ c) -> (yield . Left . Right $ c) >> (yield . Right . Left $ ())
       Right (RightZ c) -> (yield . Left . Left $ ()) >> (yield . Right . Right $ c)
 
 zip_ :: Monad m
-     => Producer a m r
-     -> Producer b m r
-     -> Producer (Either a b) m r
+     => Producer Void a m r
+     -> Producer Void b m r
+     -> Producer l (Either a b) m r
 zip_ p1 p2 = pipe Left >+> zip p1 p2
 
 (*+*) :: Monad m
-      => Pipe a b m r
-      -> Pipe a' b' m r
-      -> Pipe (Either a a') (Either b b') m r
+      => Pipe Void a b m r
+      -> Pipe Void a' b' m r
+      -> Pipe Void (Either a a') (Either b b') m r
 p1 *+* p2 = (continue p1 *** continue p2) >+> both
   where
     continue p = do

@@ -1,5 +1,5 @@
 Name: pipes-extra
-Version: 0.2.0
+Version: 0.3.0
 License: BSD3
 License-file: LICENSE
 Author: Paolo Capriotti
@@ -24,12 +24,12 @@ Library
     Build-Depends:
         base (== 4.*),
         transformers (>= 0.2 && < 0.4),
-        pipes-core (== 0.1.*),
-        bytestring (== 0.9.*)
+        pipes-core (== 0.2.*),
+        bytestring (== 0.9.*),
+        void (== 0.5.*)
     Exposed-Modules:
         Control.Pipe.Binary,
         Control.Pipe.Coroutine,
-        Control.Pipe.PutbackPipe,
         Control.Pipe.Tee,
         Control.Pipe.Zip
 
@@ -38,7 +38,7 @@ benchmark bench-general
     hs-source-dirs: . bench
     main-is: general.hs
     build-depends: base == 4.*
-                 , pipes-core == 0.1.*
+                 , pipes-core == 0.2.*
                  , bytestring == 0.9.*
                  , transformers >= 0.2 && < 0.4
                  , conduit == 0.4.*
@@ -49,7 +49,7 @@ benchmark bench-simple
     hs-source-dirs: . bench
     main-is: simple.hs
     build-depends: base == 4.*
-                 , pipes-core == 0.1.*
+                 , pipes-core == 0.2.*
                  , transformers >= 0.2 && < 0.4
                  , criterion == 0.6.*
 
@@ -58,7 +58,7 @@ benchmark bench-zlib
     hs-source-dirs: . bench
     main-is: zlib.hs
     build-depends: base == 4.*
-                 , pipes-core == 0.1.*
+                 , pipes-core == 0.2.*
                  , pipes-zlib < 0.2
                  , bytestring == 0.9.*
                  , transformers >= 0.2 && < 0.4
@@ -73,7 +73,7 @@ Executable telnet
     if flag(examples)
         build-depends: base == 4.*
                      , pipes-core == 0.1.*
-                     , pipes-extra >= 0.1 && < 0.3
+                     , pipes-extra >= 0.1 && < 0.4
                      , transformers == 0.3.*
                      , network == 2.3.*
     else
@@ -85,7 +85,7 @@ Executable compress
     if flag(examples)
         build-depends: base == 4.*
                      , pipes-core == 0.1.*
-                     , pipes-extra >= 0.1 && < 0.3
+                     , pipes-extra >= 0.1 && < 0.4
                      , pipes-zlib < 0.2
     else
         buildable: False
@@ -96,7 +96,7 @@ Executable decompress
     if flag(examples)
         build-depends: base == 4.*
                      , pipes-core == 0.1.*
-                     , pipes-extra >= 0.1 && < 0.3
+                     , pipes-extra >= 0.1 && < 0.4
                      , pipes-zlib < 0.2
     else
         buildable: False
@@ -114,5 +114,5 @@ test-suite tests
                , test-framework-hunit == 0.2.*
                , test-framework-th-prime == 0.0.*
                , mtl == 2.1.*
-               , pipes-core == 0.1.*
-               , pipes-extra == 0.2.*
+               , pipes-core == 0.2.*
+               , pipes-extra == 0.3.*

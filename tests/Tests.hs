@@ -52,7 +52,7 @@ close fp h = do
   liftIO $ hClose h
   saveAction (CloseFile fp)
 
-reader :: FilePath -> Producer ByteString M ()
+reader :: FilePath -> Producer l ByteString M ()
 reader fp = fReader >+> PB.lines
   where
     fReader = bracket
@@ -61,7 +61,7 @@ reader fp = fReader >+> PB.lines
       PB.handleReader
 
 -- line-by-line writer with verbose initializer and finalizer
-writer :: FilePath -> Consumer ByteString M ()
+writer :: FilePath -> Consumer l ByteString M ()
 writer fp = pipe (`BC.snoc` '\n') >+> fWriter
   where
     fWriter = do
