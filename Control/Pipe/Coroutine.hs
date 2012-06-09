@@ -28,6 +28,7 @@ suspend (Yield x p w) = return (Right (x, Coroutine p w))
 suspend (M s m h) = M s (liftM suspend m) (suspend . h)
 suspend (Await k h) = Await (suspend . k) (suspend . h)
 suspend (Unawait x _) = absurd x
+suspend (Flush p) = Flush (suspend p)
 
 coroutine :: Monad m
           => Pipe Void a b m r
