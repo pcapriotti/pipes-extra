@@ -66,14 +66,21 @@ zip_ p1 p2 = pipe Left >+> zip p1 p2
       => Pipe m a b u r
       -> Pipe m a' b' r s
       -> Pipe m (Either a a') (Either b b') u s
-p1 *+* p2 = p1' >+> p2'
+p1 *+* p2 = (continue p1 *** continue p2) >+> both
   where
-    p1' = do
-      r <- firstP p1 >+> pipe (either Left (Right . Right))
-      forever . yield . Right . Left $ r
-    p2' = secondP $ continue >+> p2
-
-    continue = awaitE >>= \c -> case c of
-      Left r -> return r
-      Right (Left r) -> return r
-      Right (Right x) -> yield x >> continue
+    continue p = do
+      r <- p >+> pipe Right
+      yield $ Left r
+      discard
+      return r
+    both = withDefer go
+      where
+        go = await >>= \x -> case x of
+          Left c -> either (const right) (\a -> yield (Left a) >> go) c
+          Right c -> either left (\b -> yield (Right b) >> go) c
+    left s = await >>= \x -> case x of
+      Left c -> either (\_ -> return s) (\a -> yield (Left a) >> left s) c
+      Right _ -> left s
+    right = await >>= \x -> case x of
+      Left _ -> right
+      Right c -> either return (\b -> yield (Right b) >> right) c
