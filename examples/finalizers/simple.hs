@@ -6,8 +6,8 @@ import Control.Concurrent (forkIO, myThreadId, threadDelay)
 import qualified Control.Exception as E
 import Control.Exception (Exception, IOException, throwTo)
 import Control.Monad
-import Control.Monad.Trans.Class
 import Control.Pipe
+import Control.Pipe.Class
 import Control.Pipe.Combinators
 import Control.Pipe.Exception
 import qualified Control.Pipe.Binary as PB
@@ -15,7 +15,7 @@ import System.IO
 import Prelude hiding (catch)
 
 -- line-by-line reader with verbose initializer and finalizer
-reader :: FilePath -> Producer B.ByteString IO ()
+reader :: FilePath -> Producer IO B.ByteString u ()
 reader fp = fReader >+> PB.lines
   where
     fReader = bracket open close PB.handleReader
@@ -27,10 +27,10 @@ reader fp = fReader >+> PB.lines
       putStrLn $ "closed file " ++ show fp
 
 -- line-by-line writer with verbose initializer and finalizer
-writer :: FilePath -> Consumer B.ByteString IO ()
+writer :: FilePath -> Consumer IO B.ByteString r r
 writer fp = pipe (`BC.snoc` '\n') >+> fWriter
   where
-    fWriter = await >>= \x -> feed x (bracket open close PB.handleWriter)
+    fWriter = withDefer $ await >>= \x -> feed x (bracket open close PB.handleWriter)
     open = do
       putStrLn $ "opening file " ++ show fp ++ " for writing"
       openFile fp WriteMode
@@ -39,14 +39,14 @@ writer fp = pipe (`BC.snoc` '\n') >+> fWriter
       putStrLn $ "closed file " ++ show fp
 
 -- interactive pipe
-prompt :: Pipe String String IO ()
-prompt = forever $ await >>= \q -> do
-  lift $ putStr $ q ++ ": "
-  r <- lift getLine
+prompt :: Pipe IO String String r r
+prompt = forP $ \q -> do
+  r <- exec $ do putStr (q ++ ": ")
+                 getLine
   yield r
 
 -- copy "/etc/motd" to "/tmp/x"
-ex1 :: Pipeline IO ()
+ex1 :: Pipeline IO u ()
 ex1 = reader "/etc/motd" >+> writer "/tmp/x"
 {-
   opening file "/etc/motd" for reading
@@ -57,7 +57,7 @@ ex1 = reader "/etc/motd" >+> writer "/tmp/x"
 -- note that the files are not closed in LIFO order
 
 -- output error
-ex2 :: Pipeline IO ()
+ex2 :: Pipeline IO u ()
 ex2 = reader "/etc/motd" >+> writer "/unopenable"
 {-
   opening file "/etc/motd" for reading
@@ -69,7 +69,7 @@ ex2 = reader "/etc/motd" >+> writer "/unopenable"
 -- terminated the pipeline
 
 -- joining two files
-ex3 :: Pipeline IO ()
+ex3 :: Pipeline IO u ()
 ex3 = (reader "/etc/motd" >> reader "/usr/share/dict/words") >+>
       writer "/tmp/x"
 {-
@@ -82,12 +82,12 @@ ex3 = (reader "/etc/motd" >> reader "/usr/share/dict/words") >+>
 -}
 
 -- recovering from exceptions
-ex4 :: Pipeline IO ()
+ex4 :: Pipeline IO u ()
 ex4 = (safeReader "/etc/motd" >> safeReader "/nonexistent") >+>
       writer "/tmp/x"
   where
     safeReader fp = catch (reader fp) $ \(e :: IOException) ->
-      lift $ putStrLn $ "exception " ++ show e
+      exec $ putStrLn $ "exception " ++ show e
 {-
   opening file "/etc/motd" for reading
   opening file "/tmp/x" for writing
@@ -102,21 +102,21 @@ data Timeout = Timeout
 instance Exception Timeout
 
 -- recovering from asynchronous exceptions
-ex5 :: Pipeline IO ()
+ex5 :: Pipeline IO u ()
 ex5 = questions >+> safePrompt >+> pipe BC.pack >+> writer "/tmp/x"
   where
     questions = do
       yield "Project name"
       yield "Version"
       yield "Description"
-      lift $ E.throwIO Timeout
-    timeout t = lift $ do
+      exec $ E.throwIO Timeout
+    timeout t = exec $ do
       tid <- myThreadId
       forkIO $ do
         threadDelay (t * 1000000)
         throwTo tid Timeout
     safePrompt = catch (timeout 5 >> prompt) $ \(_ :: Timeout) ->
-      lift $ putStrLn "timeout"
+      exec $ putStrLn "timeout"
 {-
   Project name: test
   opening file "/tmp/x" for writing

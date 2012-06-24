@@ -1,8 +1,8 @@
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BC
 import Control.Monad
-import Control.Monad.Trans.Class
 import Control.Pipe
+import Control.Pipe.Class
 import qualified Control.Pipe.Binary as PB
 import Control.Pipe.Combinators
 import Control.Pipe.Exception
@@ -10,10 +10,8 @@ import Control.Pipe.Zip
 import System.IO
 import Prelude hiding (filter, zip)
 
-import Control.Pipe.Coroutine
-
 -- line-by-line reader with verbose initializer and finalizer
-reader :: FilePath -> Producer B.ByteString IO ()
+reader :: FilePath -> Producer IO B.ByteString u ()
 reader fp = fReader >+> PB.lines >+> filter (not . B.null)
   where
     fReader = bracket open close PB.handleReader
@@ -25,10 +23,10 @@ reader fp = fReader >+> PB.lines >+> filter (not . B.null)
       putStrLn $ "closed file " ++ show fp
 
 -- line-by-line writer with verbose initializer and finalizer
-writer :: FilePath -> Consumer B.ByteString IO ()
+writer :: FilePath -> Consumer IO B.ByteString r r
 writer fp = pipe (`BC.snoc` '\n') >+> fWriter
   where
-    fWriter = await >>= \x -> feed x (bracket open close PB.handleWriter)
+    fWriter = withDefer $ await >>= \x -> feed x (bracket open close PB.handleWriter)
     open = do
       putStrLn $ "opening file " ++ show fp ++ " for writing"
       openFile fp WriteMode
@@ -44,9 +42,9 @@ writer fp = pipe (`BC.snoc` '\n') >+> fWriter
 --    the output file
 -- 4. close the configuration file
 -- 5. copy the rest, if any, of the other input file to the output file
-ex1 :: Pipeline IO ()
-ex1 = reader "conf" >+>       -- read configuration file
-      (await >>= process)     -- get first line and pass it to process
+ex1 :: Pipeline IO u ()
+ex1 = reader "conf" >+>             -- read configuration file
+      withDefer (await >>= process) -- get first line and pass it to process
   where
     process out =
           continue                  -- keep running when conf terminates
@@ -57,7 +55,7 @@ ex1 = reader "conf" >+>       -- read configuration file
       >+> writer (BC.unpack out)    -- save to output file
 
     continue = forP (yield . Just) >> forever (yield Nothing)
-    justs = forever $ await >>= maybe (return ()) yield
+    justs = forP $ maybe (return ()) yield
     reader' fp = pipe (const ()) >+> controllable_ (reader fp)
 
 -- Another example, demonstrating the use of controllable producers.
@@ -67,11 +65,11 @@ ex1 = reader "conf" >+>       -- read configuration file
 -- 3. close the input file with the lowest number
 -- 4. continue processing the other input file
 -- 5. close the other input file
-ex2 :: Pipeline IO ()
+ex2 :: Pipeline IO u ()
 ex2 = go (reader "input.txt") (reader "input2.txt") >+> printer
   where
     go p1 p2 = loopP $ zip p1 p2 >+> choose
-    choose = do
+    choose = withDefer $ do
       (Left line1) <- await
       (Right line2) <- await
       let n1 = read (BC.unpack line1) :: Int
@@ -81,7 +79,7 @@ ex2 = go (reader "input.txt") (reader "input2.txt") >+> printer
         then yield (Right (LeftZ (Done ())))
         else yield (Right (RightZ (Done ())))
       -- continue processing the other file
-      joinP >+> pipe Left
+      liftPipe $ joinP >+> pipe Left
 
-printer :: Show a => Pipe a Void IO r
-printer = forever $ await >>= lift . print
+printer :: Show a => Pipe IO a Void r r
+printer = forP $ exec . print
