@@ -27,14 +27,16 @@ import System.IO
 import Prelude hiding (take, takeWhile, dropWhile, lines, catch)
 
 -- | Read data from a file.
-fileReader :: MonadIO m => FilePath -> Producer m B.ByteString u ()
-fileReader path = bracket
+fileReader :: (MonadStream m, MonadIO (BaseMonad m))
+           => FilePath -> m () B.ByteString u ()
+fileReader path = liftPipe $ bracket
   (liftIO $ openFile path ReadMode)
   (liftIO . hClose)
   handleReader
 
 -- | Read data from an open handle.
-handleReader :: MonadIO m => Handle -> Producer m B.ByteString u ()
+handleReader :: (MonadStream m, MonadIO (BaseMonad m))
+             => Handle -> m () B.ByteString u ()
 handleReader h = go
   where
     go = do
@@ -47,7 +49,8 @@ handleReader h = go
 -- | Write data to a file.
 --
 -- The file is only opened if some data arrives into the pipe.
-fileWriter :: MonadIO m => FilePath -> Consumer m B.ByteString r r
+fileWriter :: (MonadStream m, MonadIO (BaseMonad m))
+           => FilePath -> m B.ByteString Void r r
 fileWriter path = withDefer $ do
   -- receive some data before opening the handle
   input <- await
@@ -60,7 +63,8 @@ fileWriter path = withDefer $ do
       handleWriter
 
 -- | Write data to a handle.
-handleWriter :: MonadIO m => Handle -> Pipe m B.ByteString Void r r
+handleWriter :: (MonadStream m, MonadIO (BaseMonad m))
+             => Handle -> m B.ByteString Void r r
 handleWriter h = forP $ liftIO . B.hPut h
 
 -- | Act as an identity for the first 'n' bytes, then terminate returning the
