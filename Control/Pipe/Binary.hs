@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
 module Control.Pipe.Binary (
   -- ** Handle and File IO
   fileReader,
@@ -16,40 +16,39 @@ module Control.Pipe.Binary (
 
 import Control.Monad
 import Control.Monad.IO.Class
-import Control.Monad.Trans.Class
 import Control.Pipe
+import Control.Pipe.Class
 import Control.Pipe.Exception
 import Control.Pipe.Combinators (tryAwait, feed)
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as BC
 import Data.Monoid
 import Data.Word
 import System.IO
 import Prelude hiding (take, takeWhile, dropWhile, lines, catch)
 
 -- | Read data from a file.
-fileReader :: MonadIO m => FilePath -> Pipe () B.ByteString m ()
+fileReader :: MonadIO m => FilePath -> Producer m B.ByteString u ()
 fileReader path = bracket
   (liftIO $ openFile path ReadMode)
   (liftIO . hClose)
   handleReader
 
 -- | Read data from an open handle.
-handleReader :: MonadIO m => Handle -> Pipe () B.ByteString m ()
+handleReader :: MonadIO m => Handle -> Producer m B.ByteString u ()
 handleReader h = go
   where
     go = do
-      eof <- lift . liftIO $ hIsEOF h
+      eof <- liftIO $ hIsEOF h
       unless eof $ do
-        chunk <- lift . liftIO $ B.hGetSome h 4096
+        chunk <- liftIO $ B.hGetSome h 4096
         yield chunk
         go
 
 -- | Write data to a file.
 --
 -- The file is only opened if some data arrives into the pipe.
-fileWriter :: MonadIO m => FilePath -> Pipe B.ByteString Void m r
-fileWriter path = do
+fileWriter :: MonadIO m => FilePath -> Consumer m B.ByteString r r
+fileWriter path = withDefer $ do
   -- receive some data before opening the handle
   input <- await
   -- feed it to the actual worker pipe
@@ -61,29 +60,30 @@ fileWriter path = do
       handleWriter
 
 -- | Write data to a handle.
-handleWriter:: MonadIO m => Handle -> Pipe B.ByteString Void m r
-handleWriter h = forever $ do
-  chunk <- await
-  lift . liftIO . B.hPut h $ chunk
+handleWriter :: MonadIO m => Handle -> Pipe m B.ByteString Void r r
+handleWriter h = forP $ liftIO . B.hPut h
 
 -- | Act as an identity for the first 'n' bytes, then terminate returning the
 -- unconsumed portion of the last chunk.
-take :: Monad m => Int -> Pipe B.ByteString B.ByteString m B.ByteString
-take size = do
-  chunk <- await
-  let (chunk', leftover) = B.splitAt size chunk
-  yield chunk'
-  if B.null leftover
-    then take $ size - B.length chunk'
-    else return leftover
+take :: MonadStream m => Int -> m B.ByteString B.ByteString u B.ByteString
+take 0 = return B.empty
+take size = go
+  where
+    go = tryAwait >>= maybe (return B.empty) split
+    split chunk = do
+      let (chunk', leftover) = B.splitAt size chunk
+      yield chunk'
+      if B.null leftover
+        then take $ size - B.length chunk'
+        else return leftover
 
 -- | Act as an identity as long as the given predicate holds, then terminate
 -- returning the unconsumed portion of the last chunk.
-takeWhile :: Monad m => (Word8 -> Bool) -> Pipe B.ByteString B.ByteString m B.ByteString
+takeWhile :: MonadStream m => (Word8 -> Bool) -> m B.ByteString B.ByteString u B.ByteString
 takeWhile p = go
   where
-    go = do
-      chunk <- await
+    go = tryAwait >>= maybe (return B.empty) split
+    split chunk = do
       let (chunk', leftover) = B.span p chunk
       unless (B.null chunk) $ yield chunk'
       if B.null leftover
@@ -91,14 +91,14 @@ takeWhile p = go
         else return leftover
 
 -- | Drop bytes as long as the given predicate holds, then act as an identity.
-dropWhile :: Monad m => (Word8 -> Bool) -> Pipe B.ByteString B.ByteString m r
+dropWhile :: MonadStream m => (Word8 -> Bool) -> m B.ByteString B.ByteString r r
 dropWhile p = do
   leftover <- takeWhile (not . p) >+> discard
   yield leftover
   idP
 
 -- | Split the chunked input stream into lines, and yield them individually.
-lines :: Monad m => Pipe B.ByteString B.ByteString m r
+lines :: MonadStream m => m B.ByteString B.ByteString r r
 lines = go B.empty
   where
     go leftover = do
@@ -115,5 +115,5 @@ lines = go B.empty
       where (line, rest) = B.breakByte 10 chunk
 
 -- | Yield individual bytes of the chunked input stream.
-bytes :: Monad m => Pipe B.ByteString Word8 m r
-bytes = forever $ await >>= B.foldl (\p c -> p >> yield c) (return ())
+bytes :: MonadStream m => m B.ByteString Word8 r r
+bytes = forP $ B.foldl (\p c -> p >> yield c) (return ())

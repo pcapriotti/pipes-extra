@@ -24,8 +24,8 @@ import Data.ByteString
 
 -- | Acts like 'idP', but also passes a copy to the supplied consumer.
 tee :: (Monad m)
-    => Pipe a Void m r -- ^ 'Consumer' that will receive a copy of all the input
-    -> Pipe a a m r
+    => Pipe m a Void u r -- ^ 'Consumer' that will receive a copy of all the input
+    -> Pipe m a a u r
 tee consumer =
     splitP >+> firstP consumer >+> discardL
 
@@ -35,7 +35,7 @@ teeFile :: (MonadIO m)
                                --   'ByteString' which can be written to
                                --   the log
         -> FilePath            -- ^ file to log to
-        -> Pipe a a m ()
+        -> Pipe m a a r r
 teeFile showBS logFile =
     tee (pipe showBS >+> fileWriter logFile)
 
@@ -44,5 +44,5 @@ teeFile showBS logFile =
 -- This function is equivalent to @teeFile id@.
 teeFileBS :: (MonadIO m)
           => FilePath                         -- ^ file to log to
-          -> Pipe ByteString ByteString m ()
+          -> Pipe m ByteString ByteString r r
 teeFileBS = teeFile id

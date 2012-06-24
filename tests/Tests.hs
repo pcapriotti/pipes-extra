@@ -5,6 +5,7 @@ import Control.Exception (SomeException)
 import qualified Control.Exception as E
 import Control.Monad.Reader hiding (reader)
 import Control.Pipe
+import Control.Pipe.Class
 import Control.Pipe.Combinators
 import Control.Pipe.Exception
 import qualified Control.Pipe.Binary as PB
@@ -30,7 +31,7 @@ type Report = IORef [Action]
 
 type M = ReaderT Report IO
 
-runPipeM :: Pipeline M r -> IO (Either SomeException r, [Action])
+runPipeM :: Pipeline M u r -> IO (Either SomeException r, [Action])
 runPipeM p = do
   r <- newIORef []
   result <- E.try $ runReaderT (runPipe p) r
@@ -52,7 +53,7 @@ close fp h = do
   liftIO $ hClose h
   saveAction (CloseFile fp)
 
-reader :: FilePath -> Producer ByteString M ()
+reader :: FilePath -> Producer M ByteString u ()
 reader fp = fReader >+> PB.lines
   where
     fReader = bracket
@@ -61,10 +62,10 @@ reader fp = fReader >+> PB.lines
       PB.handleReader
 
 -- line-by-line writer with verbose initializer and finalizer
-writer :: FilePath -> Consumer ByteString M ()
+writer :: FilePath -> Consumer M ByteString r r
 writer fp = pipe (`BC.snoc` '\n') >+> fWriter
   where
-    fWriter = do
+    fWriter = withDefer $ do
       x <- await
       feed x $
         bracket
@@ -97,7 +98,7 @@ case_cp = do
   (r, acts) <- runPipeM $ reader input >+> writer tmpOutput
   assertRight r $ \_ -> return ()
 
-  acts @=?
+  acts @?=
     [ OpenFile input ReadMode
     , OpenFile tmpOutput WriteMode
     , CloseFile input
@@ -118,7 +119,7 @@ case_unopenable = do
   (result, acts) <- runPipeM $ reader input >+> writer output
   assertLeft result isNonexistingException
 
-  acts @=?
+  acts @?=
     [ OpenFile input ReadMode
     , OpenFile output WriteMode
     , CloseFile input ]
@@ -132,7 +133,7 @@ case_join = do
     >+> writer tmpOutput
   assertRight r $ \_ -> return ()
 
-  acts @=?
+  acts @?=
     [ OpenFile input1 ReadMode
     , OpenFile tmpOutput WriteMode
     , CloseFile input1
@@ -143,7 +144,7 @@ case_join = do
   content1 <- readFile input1
   content2 <- readFile input2
   content3 <- readFile tmpOutput
-  content3 @=? content1 ++ content2
+  content3 @?= content1 ++ content2
 
 case_recover :: Assertion
 case_recover = do
@@ -151,7 +152,7 @@ case_recover = do
     input1 = "README.md"
     input2 = "/nonexistent/file"
     safeReader fp = catch (reader fp) $ \e ->
-      lift $ saveAction (CaughtException e)
+      exec $ saveAction (CaughtException e)
 
     isException (CaughtException e) = isNonexistingException (E.toException e)
     isException x = assertFailure $ "expected exception, got " ++ show x
@@ -162,12 +163,12 @@ case_recover = do
   assertRight r $ \_ -> return ()
 
   zipWithM_ (flip ($)) acts
-    [ (@=? OpenFile input1 ReadMode)
-    , (@=? OpenFile tmpOutput WriteMode)
-    , (@=? CloseFile input1)
-    , (@=? OpenFile input2 ReadMode)
+    [ (@?= OpenFile input1 ReadMode)
+    , (@?= OpenFile tmpOutput WriteMode)
+    , (@?= CloseFile input1)
+    , (@?= OpenFile input2 ReadMode)
     , isException
-    , (@=? CloseFile tmpOutput) ]
+    , (@?= CloseFile tmpOutput) ]
 
   equalFiles input1 tmpOutput
 
