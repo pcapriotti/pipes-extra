@@ -22,7 +22,7 @@ suspend :: Monad m
         => Pipe m a b u r
         -> Pipe m a x u (Either r (b, Coroutine m a b u r))
 suspend (Pure r w) = Pure (Left r) w
-suspend (Throw e p w) = Throw e (suspend p) w
+suspend (Throw e w) = Throw e w
 suspend (Yield x p w) = return (Right (x, Coroutine p w))
 suspend (M s m h) = M s (liftM suspend m) (suspend . h)
 suspend (Await k j h w) = Await (suspend . k) (suspend . j) (suspend . h) w
