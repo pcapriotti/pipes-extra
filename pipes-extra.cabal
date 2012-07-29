@@ -25,12 +25,19 @@ Library
         base (== 4.*),
         transformers (>= 0.2 && < 0.4),
         pipes-core (== 0.2.*),
-        bytestring (== 0.9.*)
+        bytestring (== 0.9.*),
+        text (== 0.11.*),
+        reducers (== 3.0.*)
     Exposed-Modules:
         Control.Pipe.Binary,
+        Control.Pipe.Chunked,
         Control.Pipe.Coroutine,
         Control.Pipe.Tee,
-        Control.Pipe.Zip
+        Control.Pipe.Zip,
+
+        Data.Generator.Length,
+        Data.Monoid.MonoidEq,
+        Data.Monoid.MonoidSplit
 
 benchmark bench-general
     type: exitcode-stdio-1.0

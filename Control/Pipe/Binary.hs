@@ -26,6 +26,8 @@ import Data.Word
 import System.IO
 import Prelude hiding (take, takeWhile, dropWhile, lines, catch)
 
+import qualified Control.Pipe.Chunked as C
+
 -- | Read data from a file.
 fileReader :: (MonadStream m, MonadIO (BaseMonad m))
            => FilePath -> m () B.ByteString u ()
@@ -70,53 +72,20 @@ handleWriter h = forP $ liftIO . B.hPut h
 -- | Act as an identity for the first 'n' bytes, then terminate returning the
 -- unconsumed portion of the last chunk.
 take :: MonadStream m => Int -> m B.ByteString B.ByteString u B.ByteString
-take 0 = return B.empty
-take size = go
-  where
-    go = tryAwait >>= maybe (return B.empty) split
-    split chunk = do
-      let (chunk', leftover) = B.splitAt size chunk
-      yield chunk'
-      if B.null leftover
-        then take $ size - B.length chunk'
-        else return leftover
+take = C.take
 
 -- | Act as an identity as long as the given predicate holds, then terminate
 -- returning the unconsumed portion of the last chunk.
 takeWhile :: MonadStream m => (Word8 -> Bool) -> m B.ByteString B.ByteString u B.ByteString
-takeWhile p = go
-  where
-    go = tryAwait >>= maybe (return B.empty) split
-    split chunk = do
-      let (chunk', leftover) = B.span p chunk
-      unless (B.null chunk) $ yield chunk'
-      if B.null leftover
-        then go
-        else return leftover
+takeWhile = C.takeWhile
 
 -- | Drop bytes as long as the given predicate holds, then act as an identity.
 dropWhile :: MonadStream m => (Word8 -> Bool) -> m B.ByteString B.ByteString r r
-dropWhile p = do
-  leftover <- takeWhile (not . p) >+> discard
-  yield leftover
-  idP
+dropWhile = C.dropWhile
 
 -- | Split the chunked input stream into lines, and yield them individually.
 lines :: MonadStream m => m B.ByteString B.ByteString r r
-lines = go B.empty
-  where
-    go leftover = do
-      mchunk <- tryAwait
-      case mchunk of
-        Nothing | B.null leftover -> idP
-        Nothing -> yield leftover >> idP
-        Just chunk -> split chunk leftover
-    split chunk leftover
-      | B.null chunk = go leftover
-      | B.null rest  = go (mappend leftover chunk)
-      | otherwise    = yield (mappend leftover line) >>
-                       split (B.drop 1 rest) mempty
-      where (line, rest) = B.breakByte 10 chunk
+lines = C.splitOn (10 :: Word8)
 
 -- | Yield individual bytes of the chunked input stream.
 bytes :: MonadStream m => m B.ByteString Word8 r r
