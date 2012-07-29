@@ -71,7 +71,7 @@ p1 *+* p2 = (continue p1 *** continue p2) >+> both
     continue p = do
       r <- p >+> pipe Right
       yield $ Left r
-      discard
+      _ <- discard
       return r
     both = withDefer go
       where

@@ -7,9 +7,6 @@ module Control.Pipe.Binary (
   handleWriter,
 
   -- ** Chunked Byte Stream Manipulation
-  take,
-  takeWhile,
-  dropWhile,
   lines,
   bytes,
   ) where
@@ -19,9 +16,8 @@ import Control.Monad.IO.Class
 import Control.Pipe
 import Control.Pipe.Class
 import Control.Pipe.Exception
-import Control.Pipe.Combinators (tryAwait, feed)
+import Control.Pipe.Combinators (feed)
 import qualified Data.ByteString as B
-import Data.Monoid
 import Data.Word
 import System.IO
 import Prelude hiding (take, takeWhile, dropWhile, lines, catch)
@@ -69,19 +65,6 @@ handleWriter :: (MonadStream m, MonadIO (BaseMonad m))
              => Handle -> m B.ByteString Void r r
 handleWriter h = forP $ liftIO . B.hPut h
 
--- | Act as an identity for the first 'n' bytes, then terminate returning the
--- unconsumed portion of the last chunk.
-take :: MonadStream m => Int -> m B.ByteString B.ByteString u B.ByteString
-take = C.take
-
--- | Act as an identity as long as the given predicate holds, then terminate
--- returning the unconsumed portion of the last chunk.
-takeWhile :: MonadStream m => (Word8 -> Bool) -> m B.ByteString B.ByteString u B.ByteString
-takeWhile = C.takeWhile
-
--- | Drop bytes as long as the given predicate holds, then act as an identity.
-dropWhile :: MonadStream m => (Word8 -> Bool) -> m B.ByteString B.ByteString r r
-dropWhile = C.dropWhile
 
 -- | Split the chunked input stream into lines, and yield them individually.
 lines :: MonadStream m => m B.ByteString B.ByteString r r
@@ -89,4 +72,4 @@ lines = C.splitOn (10 :: Word8)
 
 -- | Yield individual bytes of the chunked input stream.
 bytes :: MonadStream m => m B.ByteString Word8 r r
-bytes = forP $ B.foldl (\p c -> p >> yield c) (return ())
+bytes = C.elems

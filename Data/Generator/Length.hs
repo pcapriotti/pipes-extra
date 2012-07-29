@@ -2,7 +2,6 @@
 module Data.Generator.Length where
 
 import qualified Data.ByteString as B
-import qualified Data.Foldable as F
 import Data.Generator
 import Data.Semigroup.Reducer
 import qualified Data.Text as T

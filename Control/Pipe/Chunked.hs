@@ -1,6 +1,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 
-module Control.Pipe.Chunked where
+module Control.Pipe.Chunked
+  ( gtake
+  , take
+  , takeWhile
+  , dropWhile
+  , splitOn
+  , elems
+  ) where
 
 import Control.Monad
 import Control.Pipe
@@ -11,7 +18,7 @@ import Data.Generator
 import Data.Generator.Length
 import Data.Monoid
 import Data.Monoid.MonoidEq
-import Data.Monoid.MonoidSplit
+import Data.Monoid.MonoidSplit hiding (take)
 
 import Prelude hiding (null, take, drop, takeWhile, dropWhile, length)
 
@@ -28,14 +35,19 @@ gtake done update s
         then gtake done update (update chunk' s)
         else return leftover
 
+-- | Act as an identity for the first 'n' elements of the chunk, then terminate
+-- returning the unconsumed portion of the last chunk.
 take :: (MonadStream m, MonoidEq a, GeneratorLength a, MonoidSplit Int a)
      => Int -> m a a u a
 take = gtake (<= 0) (\chunk n -> n - length chunk)
 
+-- | Act as an identity as long as the given predicate holds, then terminate
+-- returning the unconsumed portion of the last chunk.
 takeWhile :: (MonadStream m, MonoidEq a, MonoidSplit (c -> Bool) a)
           => (c -> Bool) -> m a a u a
 takeWhile = gtake (const False) (const id)
 
+-- | Drop elemetns as long as the given predicate holds, then act as an identity
 dropWhile :: (MonadStream m, MonoidEq a, MonoidSplit (c -> Bool) a)
           => (c -> Bool) -> m a a r r
 dropWhile p = do
@@ -43,6 +55,7 @@ dropWhile p = do
   yield leftover
   idP
 
+-- | Split stream on the given element
 splitOn :: (MonadStream m, MonoidEq a, MonoidSplit c a, MonoidSplit Int a)
         => c -> m a a r r
 splitOn c = go mempty
@@ -61,5 +74,6 @@ splitOn c = go mempty
                         split_chunk (drop (1::Int) rest) mempty
         where (line, rest) = split c chunk
 
+-- | Yield individual elements of the stream
 elems :: (MonadStream m, Generator a) => m a (Elem a) r r
 elems = forP $ \chunk -> mapM_ yield (reduce chunk)

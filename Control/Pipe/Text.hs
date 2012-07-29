@@ -2,6 +2,7 @@ module Control.Pipe.Text
   ( decode
   , encode
   , lines
+  , characters
   ) where
 
 import Data.Bits
@@ -46,14 +47,21 @@ decodeChunk on_err prefix' chunk = (text, rest)
 
     text = T.decodeUtf8With on_err $ prefix' <> prefix'' <> chunk''
 
+-- | Convert a utf-8 encoded byte stream into chunks of text
 decode :: MonadStream m => T.OnDecodeError -> m ByteString Text r r
 decode on_err = withDefer $ go mempty
   where
     go prefix = await >>= \chunk -> case decodeChunk on_err prefix chunk of
       (text, prefix') -> yield text >> go prefix'
 
+-- | Convert chunked text into a utf-8 encoded byte stream
 encode :: MonadStream m => m Text ByteString r r
 encode = pipe T.encodeUtf8
 
+-- | Split the chunked input stream into lines, and yield them individually.
 lines :: MonadStream m => m Text Text r r
 lines = C.splitOn '\n'
+
+-- | Yield individual characters of the chunked input stream.
+characters :: MonadStream m => m Text Char r r
+characters = C.elems
